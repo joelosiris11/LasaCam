@@ -1,11 +1,11 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #1A1A2E;
+  color-scheme: light;
+  color: #1E3A5F;
+  background-color: #F5E6D3;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,7 +28,7 @@ html, body, #root {
 }
 
 body {
-  background: linear-gradient(180deg, #1A1A2E 0%, #16213E 100%);
+  background: #F5E6D3;
   touch-action: manipulation;
 }
 
@@ -39,17 +39,22 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: transparent;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  outline: none;
 }
-button:hover {
-  border-color: #646cff;
-}
+
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid #1E3A5F;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Estilos para video */
@@ -64,6 +69,26 @@ video {
 /* Prevenir zoom en inputs */
 input, button, textarea, select {
   font-size: 16px;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5E6D3;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E3A5F;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2C4A6B;
 }
 
 /* Responsive design */
@@ -93,4 +118,16 @@ input, button, textarea, select {
 body {
   touch-action: manipulation;
   -ms-touch-action: manipulation;
+}
+
+/* Material Design ripple effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
 }

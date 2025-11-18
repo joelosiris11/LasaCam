@@ -1,9 +1,19 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { FiCamera, FiRotateCw } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import AURORA_THEME from '../styles/theme';
+import lasalogo from '../assets/buttons/lasalogo.png';
+import bcamera from '../assets/buttons/bcamera.png';
+import bfiltros from '../assets/buttons/bfiltros.png';
 
 interface CameraCaptureProps {
   onPhotoTaken: (photoData: string) => void;
+}
+
+interface FilterSettings {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  hue: number;
 }
 
 export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) => {
@@ -11,6 +21,13 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(true);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterSettings, setFilterSettings] = useState<FilterSettings>({
+    brightness: 100,
+    contrast: 100,
+    saturation: 100,
+    hue: 0,
+  });
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
@@ -49,6 +66,19 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
     };
   }, [facingMode]);
 
+  // Aplicar filtros al video
+  useEffect(() => {
+    if (videoRef.current) {
+      const filterString = `
+        brightness(${filterSettings.brightness}%)
+        contrast(${filterSettings.contrast}%)
+        saturate(${filterSettings.saturation}%)
+        hue-rotate(${filterSettings.hue}deg)
+      `.trim().replace(/\s+/g, ' ');
+      videoRef.current.style.filter = filterString;
+    }
+  }, [filterSettings]);
+
   const handleTakePhoto = () => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d');
@@ -59,6 +89,14 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         // Aplicar transformación de espejo (como el video)
         context.translate(canvasRef.current.width, 0);
         context.scale(-1, 1);
+        
+        // Aplicar filtros al canvas
+        context.filter = `
+          brightness(${filterSettings.brightness}%)
+          contrast(${filterSettings.contrast}%)
+          saturate(${filterSettings.saturation}%)
+          hue-rotate(${filterSettings.hue}deg)
+        `.trim().replace(/\s+/g, ' ');
         
         context.drawImage(videoRef.current, 0, 0);
         const photoData = canvasRef.current.toDataURL('image/jpeg');
@@ -72,10 +110,42 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
     setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
   };
 
+  const handleGalleryClick = () => {
+    // Crear input file para seleccionar imagen
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const imageData = event.target?.result as string;
+          onPhotoTaken(imageData);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+  const updateFilter = (key: keyof FilterSettings, value: number) => {
+    setFilterSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const resetFilters = () => {
+    setFilterSettings({
+      brightness: 100,
+      contrast: 100,
+      saturation: 100,
+      hue: 0,
+    });
+  };
+
   return (
     <motion.div
       style={{
-        background: '#000000',
+        background: AURORA_THEME.colors.beige,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -103,7 +173,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#000',
+        backgroundColor: AURORA_THEME.colors.black,
         overflow: 'hidden',
       }}>
         {loading && (
@@ -123,55 +193,257 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         />
       </div>
 
-      {/* Header con botón de cambiar cámara */}
+      {/* Header con logo */}
       <motion.div
         style={{
           position: 'absolute',
           top: 'clamp(12px, 3vw, 24px)',
-          right: 'clamp(12px, 3vw, 24px)',
+          left: 'clamp(12px, 3vw, 24px)',
           zIndex: 10,
           display: 'flex',
-          gap: 'clamp(8px, 2vw, 16px)',
+          alignItems: 'center',
+          gap: 'clamp(12px, 3vw, 16px)',
         }}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        {/* Botón para cambiar cámara */}
+        {/* Logo - más grande */}
+        <img
+          src={lasalogo}
+          alt="La Aurora"
+          style={{
+            width: 'clamp(64px, 16vw, 96px)',
+            height: 'auto',
+            objectFit: 'contain',
+          }}
+        />
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <h1 style={{
+            color: AURORA_THEME.colors.blueDark,
+            fontSize: 'clamp(20px, 5vw, 28px)',
+            fontWeight: 500,
+            margin: 0,
+            fontFamily: AURORA_THEME.typography.fontFamily,
+            lineHeight: 1.2,
+          }}>
+            LA AURORA
+          </h1>
+          <h2 style={{
+            color: AURORA_THEME.colors.blueDark,
+            fontSize: 'clamp(14px, 3.5vw, 18px)',
+            fontWeight: 400,
+            margin: 0,
+            fontFamily: AURORA_THEME.typography.fontFamily,
+            textTransform: 'uppercase',
+            letterSpacing: '1px',
+          }}>
+            PHOTO
+          </h2>
+        </div>
+      </motion.div>
+
+      {/* Controles en la parte superior derecha del video */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          top: 'clamp(80px, 20vw, 120px)',
+          right: 'clamp(12px, 3vw, 24px)',
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'clamp(12px, 3vw, 16px)',
+        }}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        {/* Botón para cambiar cámara - usando bcamera.png directamente */}
         <motion.button
           onClick={toggleCamera}
           disabled={loading}
           style={{
-            width: 'clamp(44px, 10vw, 60px)',
-            height: 'clamp(44px, 10vw, 60px)',
-            borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.2)',
-            border: '2px solid rgba(255, 255, 255, 0.5)',
+            background: 'transparent',
+            border: 'none',
             cursor: loading ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
+            padding: 0,
             opacity: loading ? 0.5 : 1,
-            backdropFilter: 'blur(10px)',
           }}
           whileHover={!loading ? { scale: 1.1 } : undefined}
           whileTap={!loading ? { scale: 0.9 } : undefined}
         >
-          <FiRotateCw size="clamp(20px, 5vw, 28px)" />
+          <img
+            src={bcamera}
+            alt="Cambiar cámara"
+            style={{
+              width: 'clamp(56px, 14vw, 72px)',
+              height: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
+        </motion.button>
+
+        {/* Botón de filtros - usando bfiltros.png directamente */}
+        <motion.button
+          onClick={() => setShowFilters(!showFilters)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <img
+            src={bfiltros}
+            alt="Filtros"
+            style={{
+              width: 'clamp(56px, 14vw, 72px)',
+              height: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
         </motion.button>
       </motion.div>
 
-      {/* Botones flotantes en la parte inferior */}
+      {/* Panel de filtros - centrado */}
+      <AnimatePresence>
+        {showFilters && (
+          <>
+            {/* Overlay oscuro */}
+            <motion.div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 14,
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFilters(false)}
+            />
+            {/* Panel de filtros */}
+            <motion.div
+              style={{
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: AURORA_THEME.colors.beige,
+                border: `2px solid ${AURORA_THEME.colors.blueDark}`,
+                borderRadius: AURORA_THEME.borderRadius.xlarge,
+                padding: 'clamp(24px, 6vw, 32px)',
+                zIndex: 15,
+                boxShadow: AURORA_THEME.elevations.level16,
+                minWidth: 'clamp(280px, 70vw, 400px)',
+                maxWidth: '90vw',
+              }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 'clamp(16px, 4vw, 24px)',
+              }}>
+                <h3 style={{
+                  color: AURORA_THEME.colors.blueDark,
+                  fontSize: AURORA_THEME.typography.h3.fontSize,
+                  fontWeight: AURORA_THEME.typography.h3.fontWeight,
+                  margin: 0,
+                  fontFamily: AURORA_THEME.typography.fontFamily,
+                }}>
+                  Filtros
+                </h3>
+                <motion.button
+                  onClick={resetFilters}
+                  style={{
+                    background: AURORA_THEME.colors.white,
+                    border: `2px solid ${AURORA_THEME.colors.blueDark}`,
+                    borderRadius: AURORA_THEME.borderRadius.medium,
+                    padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)',
+                    color: AURORA_THEME.colors.blueDark,
+                    cursor: 'pointer',
+                    fontSize: AURORA_THEME.typography.body.fontSize,
+                    fontFamily: AURORA_THEME.typography.fontFamily,
+                    fontWeight: 500,
+                    boxShadow: AURORA_THEME.elevations.level2,
+                  }}
+                  whileHover={{ scale: 1.05, boxShadow: AURORA_THEME.elevations.level4 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Reset
+                </motion.button>
+              </div>
+
+            {/* Controles de filtros */}
+            {(['brightness', 'contrast', 'saturation', 'hue'] as const).map((filter) => {
+              const labels: Record<typeof filter, string> = {
+                brightness: 'Brillo',
+                contrast: 'Contraste',
+                saturation: 'Saturación',
+                hue: 'Tono',
+              };
+              const ranges: Record<typeof filter, { min: number; max: number }> = {
+                brightness: { min: 0, max: 200 },
+                contrast: { min: 0, max: 200 },
+                saturation: { min: 0, max: 200 },
+                hue: { min: -180, max: 180 },
+              };
+
+              return (
+                <div key={filter} style={{ marginBottom: 'clamp(12px, 3vw, 16px)' }}>
+                  <label style={{
+                    display: 'block',
+                    color: AURORA_THEME.colors.blueDark,
+                    fontSize: AURORA_THEME.typography.body.fontSize,
+                    fontFamily: AURORA_THEME.typography.fontFamily,
+                    marginBottom: 'clamp(4px, 1vw, 6px)',
+                  }}>
+                    {labels[filter]}: {filterSettings[filter]}{filter === 'hue' ? '°' : '%'}
+                  </label>
+                  <input
+                    type="range"
+                    min={ranges[filter].min}
+                    max={ranges[filter].max}
+                    value={filterSettings[filter]}
+                    onChange={(e) => updateFilter(filter, Number(e.target.value))}
+                    style={{
+                      width: '100%',
+                      accentColor: AURORA_THEME.colors.blueDark,
+                    }}
+                  />
+                </div>
+              );
+            })}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Barra de navegación inferior */}
       <motion.div
         style={{
           position: 'absolute',
-          bottom: 'clamp(24px, 6vw, 48px)',
+          bottom: 'clamp(12px, 3vw, 24px)',
           width: '100%',
           display: 'flex',
-          justifyContent: 'center',
+          justifyContent: 'space-around',
           alignItems: 'center',
-          gap: 'clamp(20px, 5vw, 40px)',
           padding: '0 clamp(12px, 3vw, 24px)',
           zIndex: 10,
         }}
@@ -179,29 +451,75 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        {/* Botón redondo para tomar foto */}
+        {/* Botón Gallery */}
+        <motion.button
+          onClick={handleGalleryClick}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 'clamp(4px, 1vw, 6px)',
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <div style={{
+            width: 'clamp(24px, 6vw, 32px)',
+            height: 'clamp(24px, 6vw, 32px)',
+            background: AURORA_THEME.colors.blueDark,
+            borderRadius: AURORA_THEME.borderRadius.small,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: 'clamp(16px, 4vw, 20px)' }}>🖼️</span>
+          </div>
+          <span style={{
+            color: AURORA_THEME.colors.blueDark,
+            fontSize: 'clamp(10px, 2.5vw, 12px)',
+            fontWeight: 500,
+            fontFamily: AURORA_THEME.typography.fontFamily,
+            textTransform: 'uppercase',
+          }}>
+            GALLERY
+          </span>
+        </motion.button>
+
+        {/* Botón principal de captura */}
         <motion.button
           onClick={handleTakePhoto}
           style={{
-            width: 'clamp(64px, 16vw, 90px)',
-            height: 'clamp(64px, 16vw, 90px)',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%)',
-            border: '5px solid white',
+            width: 'clamp(72px, 18vw, 96px)',
+            height: 'clamp(72px, 18vw, 96px)',
+            borderRadius: AURORA_THEME.borderRadius.round,
+            background: AURORA_THEME.colors.white,
+            border: `clamp(4px, 1vw, 6px) solid ${AURORA_THEME.colors.gold}`,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 12px 40px rgba(255, 107, 53, 0.6)',
+            padding: 0,
+            boxShadow: AURORA_THEME.elevations.level8,
+            position: 'relative',
           }}
-          whileHover={{ scale: 1.12 }}
-          whileTap={{ scale: 0.88 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
-          <FiCamera size="clamp(32px, 10vw, 50px)" color="white" strokeWidth={1.5} />
+          <div style={{
+            width: 'clamp(56px, 14vw, 72px)',
+            height: 'clamp(56px, 14vw, 72px)',
+            borderRadius: AURORA_THEME.borderRadius.round,
+            background: AURORA_THEME.colors.white,
+            border: `2px solid ${AURORA_THEME.colors.blueDark}`,
+          }} />
         </motion.button>
 
-        {/* Espaciador invisible para centrar el botón principal */}
-        <div style={{ width: 'clamp(44px, 10vw, 60px)' }} />
+        {/* Espaciador para mantener simetría */}
+        <div style={{ width: 'clamp(60px, 15vw, 80px)' }} />
       </motion.div>
 
       <canvas
@@ -230,9 +548,9 @@ const LoadingSpinner: React.FC = () => {
         style={{
           width: 'clamp(60px, 15vw, 100px)',
           height: 'clamp(60px, 15vw, 100px)',
-          border: '4px solid rgba(255, 107, 53, 0.3)',
-          borderTop: '4px solid #FF6B35',
-          borderRadius: '50%',
+          border: `4px solid rgba(212, 175, 55, 0.3)`,
+          borderTop: `4px solid ${AURORA_THEME.colors.gold}`,
+          borderRadius: AURORA_THEME.borderRadius.round,
         }}
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
