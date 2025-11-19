@@ -112,25 +112,42 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                 >
                     <ArrowLeftIcon size={32} color={AURORA_THEME.colors.blueDark} strokeWidth={2.5} />
                 </button>
-                <h2 style={{
-                    margin: 0,
-                    color: AURORA_THEME.colors.blueDark,
-                    fontFamily: '"DynaPuff", cursive',
-                    fontSize: 'clamp(20px, 5vw, 24px)',
-                }}>
-                    Galería Pública
-                </h2>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <h2 style={{
+                        margin: 0,
+                        color: AURORA_THEME.colors.blueDark,
+                        fontFamily: '"DynaPuff", cursive',
+                        fontSize: 'clamp(20px, 5vw, 24px)',
+                    }}>
+                        Galería Pública
+                    </h2>
+                    {!loading && photos.length > 0 && (
+                        <span style={{
+                            color: AURORA_THEME.colors.blueDark,
+                            fontFamily: '"Montserrat", sans-serif',
+                            fontSize: 'clamp(14px, 3.5vw, 16px)',
+                            opacity: 0.7,
+                            marginLeft: '16px',
+                        }}>
+                            {photos.length} {photos.length === 1 ? 'foto' : 'fotos'}
+                        </span>
+                    )}
+                </div>
             </div>
 
-            {/* Grid de Fotos */}
+            {/* Grid de Fotos - Optimizado para muchas fotos */}
             <div style={{
                 flex: 1,
                 overflowY: 'auto',
-                padding: 'clamp(16px, 4vw, 24px)',
+                padding: 'clamp(10px, 2.5vw, 16px)',
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(120px, 25vw, 160px), 1fr))',
-                gap: 'clamp(12px, 3vw, 16px)',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(90px, 18vw, 120px), 1fr))',
+                gap: 'clamp(6px, 1.5vw, 10px)',
                 alignContent: 'start',
+                // Optimización de rendimiento
+                willChange: 'scroll-position',
+                // Mejorar scroll suave
+                scrollBehavior: 'smooth',
             }}>
                 {loading ? (
                     <motion.div 
@@ -210,17 +227,17 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                         <motion.button
                             key={photo.filename}
                             onClick={() => handlePhotoClick(photo, index)}
-                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            whileHover={{ scale: 1.05, y: -4 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3, delay: Math.min(index * 0.01, 0.3) }}
+                            whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             style={{
                                 aspectRatio: '9/16',
-                                borderRadius: AURORA_THEME.borderRadius.large,
+                                borderRadius: AURORA_THEME.borderRadius.small,
                                 overflow: 'hidden',
-                                boxShadow: AURORA_THEME.elevations.level4,
-                                border: `3px solid ${AURORA_THEME.colors.white}`,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                border: `1.5px solid ${AURORA_THEME.colors.white}`,
                                 position: 'relative',
                                 background: AURORA_THEME.colors.white,
                                 padding: 0,
@@ -229,28 +246,15 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                         >
                             <img
                                 src={photo.url}
-                                alt="Gallery item"
+                                alt={`Foto ${index + 1}`}
                                 loading="lazy"
+                                decoding="async"
                                 style={{
                                     width: '100%',
                                     height: '100%',
                                     objectFit: 'cover',
                                     display: 'block',
                                 }}
-                            />
-                            {/* Overlay sutil al hover */}
-                            <motion.div
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 100%)',
-                                    pointerEvents: 'none',
-                                }}
-                                initial={{ opacity: 0 }}
-                                whileHover={{ opacity: 1 }}
                             />
                         </motion.button>
                     ))

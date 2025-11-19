@@ -31,7 +31,8 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
     isResizing: boolean;
     initialMousePos: { x: number; y: number } | null;
     initialScale: number;
-  }>({ isResizing: false, initialMousePos: null, initialScale: 1 });
+    currentIndex: number | null;
+  }>({ isResizing: false, initialMousePos: null, initialScale: 1, currentIndex: null });
 
   // Sync ref
   placedStickersRef.current = placedStickers;
@@ -157,38 +158,81 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
 
   // Handlers para resize con mouse
   const handleResizeStart = (e: React.MouseEvent, index: number) => {
+    console.log('🖱️ MOUSE START - Resize iniciado', { index, clientX: e.clientX, clientY: e.clientY });
+    e.preventDefault();
     e.stopPropagation();
     setSelectedStickerIndex(index);
     const currentSticker = placedStickers[index];
+    console.log('📏 Sticker actual:', { scale: currentSticker.scale, index });
+    
     resizeDragRef.current = {
       isResizing: true,
       initialMousePos: { x: e.clientX, y: e.clientY },
       initialScale: currentSticker.scale,
+      currentIndex: index,
     };
+
+    // Agregar listeners globales para capturar el movimiento fuera del elemento
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!resizeDragRef.current.isResizing || !resizeDragRef.current.initialMousePos) {
+        console.log('⚠️ MOUSE MOVE - Condición no cumplida', {
+          isResizing: resizeDragRef.current.isResizing,
+          hasInitialPos: !!resizeDragRef.current.initialMousePos
+        });
+        return;
+      }
+      
+      const deltaX = e.clientX - resizeDragRef.current.initialMousePos.x;
+      const deltaY = e.clientY - resizeDragRef.current.initialMousePos.y;
+      
+      console.log('🖱️ MOUSE MOVE - Drag activo', {
+        deltaX,
+        deltaY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        initialScale: resizeDragRef.current.initialScale
+      });
+      
+      // Calcular el cambio de escala basado en el movimiento diagonal
+      // Usar la suma de deltaX y deltaY para movimiento diagonal más intuitivo
+      const diagonalMovement = (deltaX + deltaY) / 2;
+      const scaleChange = diagonalMovement / 100; // Más sensible
+      const newScale = Math.max(0.3, Math.min(3, resizeDragRef.current.initialScale + scaleChange));
+
+      console.log('📐 Calculando escala', {
+        diagonalMovement,
+        scaleChange,
+        newScale,
+        currentIndex: resizeDragRef.current.currentIndex
+      });
+
+      if (resizeDragRef.current.currentIndex !== null) {
+        updateSticker(resizeDragRef.current.currentIndex, { scale: newScale });
+        console.log('✅ Escala actualizada a:', newScale);
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      console.log('🖱️ MOUSE UP - Resize terminado');
+      resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1, currentIndex: null };
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      setTouchState({ touches: [], isResizing: false });
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    console.log('✅ Listeners globales agregados');
   };
 
   const handleResizeMove = (e: React.MouseEvent, index: number) => {
-    if (!resizeDragRef.current.isResizing || !resizeDragRef.current.initialMousePos) return;
-    e.stopPropagation();
-
-    const deltaX = e.clientX - resizeDragRef.current.initialMousePos.x;
-    const deltaY = e.clientY - resizeDragRef.current.initialMousePos.y;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    const direction = deltaX + deltaY > 0 ? 1 : -1;
-
-    const scaleChange = (distance * direction) / 200;
-    const newScale = Math.max(0.3, Math.min(3, resizeDragRef.current.initialScale + scaleChange));
-
-    updateSticker(index, { scale: newScale });
-    
-    // Actualizar para movimiento continuo
-    resizeDragRef.current.initialMousePos = { x: e.clientX, y: e.clientY };
-    resizeDragRef.current.initialScale = newScale;
+    // Este handler ya no se usa, pero lo mantenemos por compatibilidad
+    // El resize ahora se maneja con listeners globales
   };
 
   const handleResizeEnd = () => {
     if (resizeDragRef.current.isResizing) {
-      resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1 };
+      resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1, currentIndex: null };
     }
     setTouchState({ touches: [], isResizing: false });
   };
@@ -206,6 +250,13 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       if (!element) return;
 
       const touchStart = (e: TouchEvent) => {
+        console.log('👆 TOUCH START - Resize iniciado', {
+          touches: e.touches.length,
+          index,
+          clientX: e.touches[0]?.clientX,
+          clientY: e.touches[0]?.clientY
+        });
+        
         if (e.touches.length === 1) {
           e.preventDefault();
           e.stopPropagation();
@@ -213,51 +264,87 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
           const currentSticker = placedStickersRef.current[index];
 
           if (currentSticker) {
+            console.log('📏 Sticker actual (touch):', { scale: currentSticker.scale, index });
             resizeDragRef.current = {
               isResizing: true,
               initialMousePos: { x: e.touches[0].clientX, y: e.touches[0].clientY },
               initialScale: currentSticker.scale,
+              currentIndex: index,
             };
+            console.log('✅ Estado de resize configurado');
+          } else {
+            console.log('❌ No se encontró el sticker en el índice:', index);
           }
+        } else {
+          console.log('⚠️ TOUCH START - Múltiples toques o sin toques');
         }
       };
 
       const touchMove = (e: TouchEvent) => {
+        console.log('👆 TOUCH MOVE', {
+          touches: e.touches.length,
+          isResizing: resizeDragRef.current.isResizing,
+          hasInitialPos: !!resizeDragRef.current.initialMousePos,
+          currentIndex: resizeDragRef.current.currentIndex
+        });
+        
         if (e.touches.length === 1 && resizeDragRef.current.isResizing) {
           e.preventDefault();
           e.stopPropagation();
           
-          const { initialMousePos, initialScale } = resizeDragRef.current;
-          if (!initialMousePos) return;
+          const { initialMousePos, initialScale, currentIndex } = resizeDragRef.current;
+          if (!initialMousePos || currentIndex === null) {
+            console.log('⚠️ TOUCH MOVE - Condición no cumplida', {
+              hasInitialPos: !!initialMousePos,
+              currentIndex
+            });
+            return;
+          }
 
           const touch = e.touches[0];
           const deltaX = touch.clientX - initialMousePos.x;
           const deltaY = touch.clientY - initialMousePos.y;
 
-          // Calcular distancia desde el punto inicial
-          const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-          const direction = deltaX + deltaY > 0 ? 1 : -1;
-          
-          // Escalar basado en la distancia del movimiento
-          const scaleChange = (distance * direction) / 200;
+          console.log('👆 TOUCH MOVE - Drag activo', {
+            deltaX,
+            deltaY,
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            initialScale
+          });
+
+          // Calcular el cambio de escala basado en el movimiento diagonal
+          const diagonalMovement = (deltaX + deltaY) / 2;
+          const scaleChange = diagonalMovement / 100; // Más sensible
           const newScale = Math.max(0.3, Math.min(3, initialScale + scaleChange));
+
+          console.log('📐 Calculando escala (touch)', {
+            diagonalMovement,
+            scaleChange,
+            newScale,
+            currentIndex
+          });
 
           // Usar el índice actual del sticker
           const currentStickers = [...placedStickersRef.current];
-          if (currentStickers[index]) {
-            currentStickers[index] = { ...currentStickers[index], scale: newScale };
+          if (currentStickers[currentIndex]) {
+            currentStickers[currentIndex] = { ...currentStickers[currentIndex], scale: newScale };
             setPlacedStickers(currentStickers);
+            console.log('✅ Escala actualizada (touch) a:', newScale);
             
             // Actualizar posición inicial para movimiento continuo
             resizeDragRef.current.initialMousePos = { x: touch.clientX, y: touch.clientY };
             resizeDragRef.current.initialScale = newScale;
+          } else {
+            console.log('❌ No se encontró el sticker en currentIndex:', currentIndex);
           }
         }
       };
 
       const touchEnd = () => {
+        console.log('👆 TOUCH END - Resize terminado');
         if (resizeDragRef.current.isResizing) {
-          resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1 };
+          resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1, currentIndex: null };
         }
         setTouchState({ touches: [], isResizing: false });
       };
