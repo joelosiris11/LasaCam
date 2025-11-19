@@ -679,15 +679,15 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
           pointerEvents: 'none',
         }}
       >
-        {/* Botón de guardar - esquina inferior derecha */}
+        {/* Botón de guardar - esquina inferior izquierda */}
         <motion.div
           style={{
             position: 'absolute',
-            right: 'clamp(12px, 3vw, 24px)',
+            left: 'clamp(12px, 3vw, 24px)',
             bottom: 'clamp(20px, 5vw, 32px)',
             pointerEvents: 'auto',
           }}
-          initial={{ opacity: 0, x: 20 }}
+          initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
         >
