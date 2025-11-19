@@ -470,7 +470,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
           position: 'absolute',
           bottom: 'clamp(120px, 30vw, 160px)', // Encima de la barra de botones
           right: 'clamp(12px, 3vw, 24px)',
-          zIndex: 10,
+          zIndex: 3,
           pointerEvents: 'none', // Permitir clicks a través (si fuera necesario)
         }}
         initial={{ opacity: 0, x: 20 }}
@@ -577,6 +577,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     touchAction: 'none',
                     boxShadow: selectedStickerIndex === index ? AURORA_THEME.elevations.level4 : 'none',
                     pointerEvents: 'auto',
+                    zIndex: 1,
                   }}
                 >
                   <img
