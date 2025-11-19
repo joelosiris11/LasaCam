@@ -8,9 +8,27 @@
     ],
     "rewrites": [
       {
+        "source": "/api/upload",
+        "function": {
+          "functionId": "uploadPhoto"
+        }
+      },
+      {
+        "source": "/api/photos",
+        "function": {
+          "functionId": "listPhotos"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
+  },
+  "functions": {
+    "source": "functions"
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }

@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// Reglas de seguridad para Firebase Storage - LasaCam
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Permitir lectura pública de todas las imágenes en /uploads
+    match /uploads/{allPaths=**} {
+      // Cualquiera puede leer (ver/descargar) las fotos
+      allow read: if true;
+      
+      // Solo las Cloud Functions pueden escribir (subir/eliminar)
+      // Esto previene que usuarios suban archivos directamente desde el cliente
+      allow write: if false;
+    }
+    
+    // Denegar acceso a cualquier otra ruta
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

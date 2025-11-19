@@ -35,8 +35,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
       const formData = new FormData();
       formData.append('photo', blob, `lasacam-${Date.now()}.jpg`);
 
-      // Frontend on Firebase, backend on fixed server
-      const apiUrl = 'https://test.t-ecogroup.net/backend/api/upload';
+      // Firebase Functions backend
+      const apiUrl = 'https://lasacam.web.app/api/upload';
 
       const response = await fetch(apiUrl, {
         method: 'POST',

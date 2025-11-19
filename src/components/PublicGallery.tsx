@@ -38,8 +38,8 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
 
     const fetchPhotos = async () => {
         try {
-            // Frontend on Firebase, backend on fixed server
-            const apiUrl = 'https://test.t-ecogroup.net/backend/api/photos';
+            // Firebase Functions backend
+            const apiUrl = 'https://lasacam.web.app/api/photos';
             const response = await fetch(apiUrl);
             if (response.ok) {
                 const data = await response.json();
