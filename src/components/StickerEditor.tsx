@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DownloadIcon, ArrowLeftIcon, TrashIcon } from './icons';
+import { DownloadIcon, ArrowLeftIcon, TrashIcon, ResizeIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
 import lasalogo from '../assets/buttons/lasalogo.png';
 import bstiker from '../assets/buttons/bstiker.png';
@@ -15,6 +15,11 @@ interface StickerEditorProps {
 
 interface TouchState {
   touches: React.Touch[];
+  startX?: number;
+  startY?: number;
+  isResizing?: boolean;
+  initialScale?: number;
+  initialDistance?: number;
 }
 
 export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave, onBackClick }) => {
@@ -70,6 +75,42 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
     setSelectedStickerIndex(null);
   };
 
+  const getDistance = (x1: number, y1: number, x2: number, y2: number) => {
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  };
+
+  const handleResizeStart = (e: React.TouchEvent | React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    const sticker = placedStickers[index];
+    const stickerElement = stickerRefs.current.get(sticker.id);
+
+    if (!stickerElement) return;
+
+    const rect = stickerElement.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    let clientX, clientY;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
+    }
+
+    const distance = getDistance(centerX, centerY, clientX, clientY);
+
+    setTouchState({
+      touches: 'touches' in e ? Array.from(e.touches) : [],
+      isResizing: true,
+      initialScale: sticker.scale,
+      initialDistance: distance,
+      startX: clientX,
+      startY: clientY
+    });
+  };
+
   const handleTouchStart = (e: React.TouchEvent, index: number) => {
     e.stopPropagation();
     setSelectedStickerIndex(index);
@@ -84,8 +125,26 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   const handleTouchMove = (e: React.TouchEvent, index: number) => {
     e.stopPropagation();
 
-    // Solo mover con un dedo
-    if (e.touches.length === 1 && touchState.touches.length === 1) {
+    if (touchState.isResizing && touchState.initialDistance && touchState.initialScale) {
+      // Lógica de Resize
+      const sticker = placedStickers[index];
+      const stickerElement = stickerRefs.current.get(sticker.id);
+      if (!stickerElement) return;
+
+      const rect = stickerElement.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const currentDistance = getDistance(centerX, centerY, e.touches[0].clientX, e.touches[0].clientY);
+      const scaleFactor = currentDistance / touchState.initialDistance;
+      const newScale = Math.max(0.3, Math.min(3, touchState.initialScale * scaleFactor));
+
+      updateSticker(index, { scale: newScale });
+      return;
+    }
+
+    if (e.touches.length === 1 && touchState.touches.length === 1 && !touchState.isResizing) {
+      // Lógica de Mover (Drag)
       if (!containerRef.current) return;
 
       const stickerElement = stickerRefs.current.get(placedStickers[index].id);
@@ -101,7 +160,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       const deltaX = e.touches[0].clientX - touchState.touches[0].clientX;
       const deltaY = e.touches[0].clientY - touchState.touches[0].clientY;
 
-      // Definir margen superior seguro para el logo (reducido para no quitar tanto espacio)
+      // Definir margen superior seguro para el logo
       const logoSafeMargin = Math.max(70, containerHeight * 0.08);
 
       updateSticker(index, {
@@ -110,13 +169,84 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       });
 
       setTouchState({
+        ...touchState,
         touches: Array.from(e.touches),
       });
     }
   };
 
   const handleTouchEnd = () => {
-    setTouchState({ touches: [] });
+    setTouchState({ touches: [], isResizing: false });
+  };
+
+  // Mouse support handlers
+  const handleMouseDown = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    setSelectedStickerIndex(index);
+    setTouchState({
+      touches: [],
+      startX: e.clientX,
+      startY: e.clientY,
+      isResizing: false
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    if (selectedStickerIndex !== index) return;
+
+    if (touchState.isResizing && touchState.initialDistance && touchState.initialScale) {
+      // Lógica de Resize Mouse
+      const sticker = placedStickers[index];
+      const stickerElement = stickerRefs.current.get(sticker.id);
+      if (!stickerElement) return;
+
+      const rect = stickerElement.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const currentDistance = getDistance(centerX, centerY, e.clientX, e.clientY);
+      const scaleFactor = currentDistance / touchState.initialDistance;
+      const newScale = Math.max(0.3, Math.min(3, touchState.initialScale * scaleFactor));
+
+      updateSticker(index, { scale: newScale });
+      return;
+    }
+
+    // Si estamos moviendo con mouse (boton izquierdo presionado)
+    if (e.buttons === 1 && touchState.startX !== undefined && touchState.startY !== undefined && !touchState.isResizing) {
+      if (!containerRef.current) return;
+
+      const stickerElement = stickerRefs.current.get(placedStickers[index].id);
+      if (!stickerElement) return;
+
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+
+      const stickerWidth = stickerElement.offsetWidth;
+      const stickerHeight = stickerElement.offsetHeight;
+
+      const deltaX = e.clientX - touchState.startX;
+      const deltaY = e.clientY - touchState.startY;
+
+      const logoSafeMargin = Math.max(70, containerHeight * 0.08);
+
+      updateSticker(index, {
+        x: Math.max(0, Math.min(placedStickers[index].x + deltaX, containerWidth - stickerWidth)),
+        y: Math.max(logoSafeMargin, Math.min(placedStickers[index].y + deltaY, containerHeight - stickerHeight)),
+      });
+
+      setTouchState({
+        ...touchState,
+        startX: e.clientX,
+        startY: e.clientY,
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setTouchState({ touches: [], isResizing: false });
   };
 
   const handleSave = async () => {
@@ -278,7 +408,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       style={{
         background: AURORA_THEME.colors.beige,
         width: '100vw',
-        height: '100dvh',
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         padding: 0,
@@ -373,7 +503,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
           alignItems: 'center',
           justifyContent: 'center',
           aspectRatio: '9/16',
-          maxHeight: 'calc(100dvh - 80px)',
+          maxHeight: 'calc(100vh - 80px)',
         }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -420,12 +550,16 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                   onTouchStart={(e) => handleTouchStart(e, index)}
                   onTouchMove={(e) => handleTouchMove(e, index)}
                   onTouchEnd={handleTouchEnd}
+                  onMouseDown={(e) => handleMouseDown(e, index)}
+                  onMouseMove={(e) => handleMouseMove(e, index)}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
                   onClick={() => setSelectedStickerIndex(index)}
                   initial={{ opacity: 0, scale: 0, rotate: -180 }}
                   animate={{
                     opacity: 1,
-                    scale: 1,
-                    rotate: 0,
+                    scale: sticker.scale,
+                    rotate: sticker.rotation,
                     transition: {
                       type: 'spring',
                       damping: 12,
@@ -439,7 +573,6 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     left: `${sticker.x}px`,
                     top: `${sticker.y}px`,
                     cursor: 'grab',
-                    transform: `scale(${sticker.scale}) rotate(${sticker.rotation}deg)`,
                     border: selectedStickerIndex === index ? `3px solid ${AURORA_THEME.colors.gold}` : 'none',
                     borderRadius: AURORA_THEME.borderRadius.medium,
                     padding: selectedStickerIndex === index ? '4px' : '0px',
@@ -462,37 +595,70 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     draggable={false}
                   />
 
-                  {/* Controles - botón eliminar */}
+                  {/* Controles */}
                   {selectedStickerIndex === index && (
-                    <motion.div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSticker(index);
-                      }}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      style={{
-                        position: 'absolute',
-                        top: '-8px',
-                        left: '-8px',
-                        width: '28px',
-                        height: '28px',
-                        background: AURORA_THEME.colors.blueDark,
-                        border: `2px solid ${AURORA_THEME.colors.white}`,
-                        borderRadius: '50%',
-                        cursor: 'pointer',
-                        boxShadow: AURORA_THEME.elevations.level4,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 10,
-                      }}
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <TrashIcon size={14} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
-                    </motion.div>
+                    <>
+                      {/* Botón eliminar - esquina superior izquierda */}
+                      <motion.div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSticker(index);
+                        }}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        style={{
+                          position: 'absolute',
+                          top: '-12px',
+                          left: '-12px',
+                          width: '28px',
+                          height: '28px',
+                          background: AURORA_THEME.colors.blueDark,
+                          border: `2px solid ${AURORA_THEME.colors.white}`,
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          boxShadow: AURORA_THEME.elevations.level4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 10,
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <TrashIcon size={14} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
+                      </motion.div>
+
+                      {/* Botón Resize (Drag) - esquina inferior derecha */}
+                      <motion.div
+                        onTouchStart={(e) => handleResizeStart(e, index)}
+                        onMouseDown={(e) => handleResizeStart(e, index)}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        style={{
+                          position: 'absolute',
+                          bottom: '-12px',
+                          right: '-12px',
+                          width: '28px',
+                          height: '28px',
+                          background: AURORA_THEME.colors.gold,
+                          border: `2px solid ${AURORA_THEME.colors.white}`,
+                          borderRadius: '50%',
+                          cursor: 'nwse-resize',
+                          boxShadow: AURORA_THEME.elevations.level4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 10,
+                          touchAction: 'none',
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <ResizeIcon size={14} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
+                      </motion.div>
+                    </>
                   )}
                 </motion.div>
               );
@@ -681,7 +847,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 borderRadius: `${AURORA_THEME.borderRadius.xlarge} ${AURORA_THEME.borderRadius.xlarge} 0 0`,
                 padding: 'clamp(16px, 4vw, 24px)',
                 width: '100%',
-                maxHeight: '70dvh',
+                maxHeight: '70vh',
                 display: 'flex',
                 flexDirection: 'column',
                 boxShadow: AURORA_THEME.elevations.level16,
@@ -750,7 +916,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                   gap: 'clamp(12px, 3vw, 16px)',
                   overflowY: 'auto',
                   paddingRight: 'clamp(4px, 1vw, 8px)',
-                  maxHeight: 'calc(70dvh - 100px)',
+                  maxHeight: 'calc(70vh - 100px)',
                 }}
                 variants={{
                   visible: {

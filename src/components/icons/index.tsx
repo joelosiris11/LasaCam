@@ -14,6 +14,12 @@ export const PlusIcon: React.FC<IconProps> = ({ size = 24, color = 'currentColor
   </svg>
 );
 
+export const MinusIcon: React.FC<IconProps> = ({ size = 24, color = 'currentColor', strokeWidth = 2, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
 export const DownloadIcon: React.FC<IconProps> = ({ size = 24, color = 'currentColor', strokeWidth = 2, className }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -139,5 +145,24 @@ export const LeafIcon: React.FC<IconProps> = ({ size = 24, color = 'currentColor
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
     <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+  </svg>
+);
+
+export const ResizeIcon: React.FC<IconProps> = ({ size = 24, color = 'currentColor', strokeWidth = 2, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+    <polyline points="9 21 3 21 3 15" />
+    <line x1="14" y1="10" x2="3" y2="21" />
+  </svg>
+);
+
+export const ShareIcon: React.FC<IconProps> = ({ size = 24, color = 'currentColor', strokeWidth = 2, className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
   </svg>
 );

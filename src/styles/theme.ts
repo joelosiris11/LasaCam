@@ -13,8 +13,10 @@ export const AURORA_THEME = {
     goldDark: '#B8941F',
     white: '#FFFFFF',
     black: '#000000',
+    green: '#4CAF50',
+    red: '#F44336',
   },
-  
+
   // Material Design elevations
   elevations: {
     level0: 'none',
@@ -29,7 +31,7 @@ export const AURORA_THEME = {
     level16: '0px 8px 10px -5px rgba(0,0,0,.2), 0px 16px 24px 2px rgba(0,0,0,.14), 0px 6px 30px 5px rgba(0,0,0,.12)',
     level24: '0px 11px 15px -7px rgba(0,0,0,.2), 0px 24px 38px 3px rgba(0,0,0,.14), 0px 9px 46px 8px rgba(0,0,0,.12)',
   },
-  
+
   // Border radius
   borderRadius: {
     small: '4px',
@@ -39,7 +41,7 @@ export const AURORA_THEME = {
     round: '50%',
     pill: '50px',
   },
-  
+
   // Typography
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
