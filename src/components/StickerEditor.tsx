@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DownloadIcon, ArrowLeftIcon, TrashIcon, ResizeIcon } from './icons';
+import { DownloadIcon, ArrowLeftIcon, TrashIcon, ResizeIcon, RotateIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
 import lasalogo from '../assets/buttons/lasalogo.png';
 import bstiker from '../assets/buttons/bstiker.png';
@@ -18,8 +18,11 @@ interface TouchState {
   startX?: number;
   startY?: number;
   isResizing?: boolean;
+  isRotating?: boolean;
   initialScale?: number;
   initialDistance?: number;
+  initialRotation?: number;
+  initialAngle?: number;
 }
 
 export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave, onBackClick }) => {
@@ -111,6 +114,38 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
     });
   };
 
+  const handleRotateStart = (e: React.TouchEvent | React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    const sticker = placedStickers[index];
+    const stickerElement = stickerRefs.current.get(sticker.id);
+
+    if (!stickerElement) return;
+
+    const rect = stickerElement.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    let clientX, clientY;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = (e as React.MouseEvent).clientX;
+      clientY = (e as React.MouseEvent).clientY;
+    }
+
+    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+
+    setTouchState({
+      touches: 'touches' in e ? Array.from(e.touches) : [],
+      isRotating: true,
+      initialRotation: sticker.rotation,
+      initialAngle: angle,
+      startX: clientX,
+      startY: clientY
+    });
+  };
+
   const handleTouchStart = (e: React.TouchEvent, index: number) => {
     e.stopPropagation();
     setSelectedStickerIndex(index);
@@ -140,6 +175,24 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       const newScale = Math.max(0.3, Math.min(3, touchState.initialScale * scaleFactor));
 
       updateSticker(index, { scale: newScale });
+      return;
+    }
+
+    if (touchState.isRotating && touchState.initialAngle !== undefined && touchState.initialRotation !== undefined) {
+      // Lógica de Rotación
+      const sticker = placedStickers[index];
+      const stickerElement = stickerRefs.current.get(sticker.id);
+      if (!stickerElement) return;
+
+      const rect = stickerElement.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const currentAngle = Math.atan2(e.touches[0].clientY - centerY, e.touches[0].clientX - centerX) * (180 / Math.PI);
+      const angleDiff = currentAngle - touchState.initialAngle;
+      const newRotation = (touchState.initialRotation + angleDiff) % 360;
+
+      updateSticker(index, { rotation: newRotation });
       return;
     }
 
@@ -176,7 +229,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   };
 
   const handleTouchEnd = () => {
-    setTouchState({ touches: [], isResizing: false });
+    setTouchState({ touches: [], isResizing: false, isRotating: false });
   };
 
   // Mouse support handlers
@@ -213,6 +266,24 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       return;
     }
 
+    if (touchState.isRotating && touchState.initialAngle !== undefined && touchState.initialRotation !== undefined) {
+      // Lógica de Rotación Mouse
+      const sticker = placedStickers[index];
+      const stickerElement = stickerRefs.current.get(sticker.id);
+      if (!stickerElement) return;
+
+      const rect = stickerElement.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+      const angleDiff = currentAngle - touchState.initialAngle;
+      const newRotation = (touchState.initialRotation + angleDiff) % 360;
+
+      updateSticker(index, { rotation: newRotation });
+      return;
+    }
+
     // Si estamos moviendo con mouse (boton izquierdo presionado)
     if (e.buttons === 1 && touchState.startX !== undefined && touchState.startY !== undefined && !touchState.isResizing) {
       if (!containerRef.current) return;
@@ -246,7 +317,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   };
 
   const handleMouseUp = () => {
-    setTouchState({ touches: [], isResizing: false });
+    setTouchState({ touches: [], isResizing: false, isRotating: false });
   };
 
   const handleSave = async () => {
@@ -559,9 +630,8 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     rotate: sticker.rotation,
                     transition: {
                       type: 'spring',
-                      damping: 12,
-                      stiffness: 200,
-                      duration: 0.6
+                      damping: 15,
+                      stiffness: 300,
                     }
                   }}
                   exit={{ opacity: 0, scale: 0, rotate: 180 }}
@@ -655,6 +725,36 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                         whileTap={{ scale: 0.9 }}
                       >
                         <ResizeIcon size={14} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
+                      </motion.div>
+
+                      {/* Botón Rotar - esquina superior derecha */}
+                      <motion.div
+                        onTouchStart={(e) => handleRotateStart(e, index)}
+                        onMouseDown={(e) => handleRotateStart(e, index)}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        style={{
+                          position: 'absolute',
+                          top: '-12px',
+                          right: '-12px',
+                          width: '28px',
+                          height: '28px',
+                          background: AURORA_THEME.colors.gold,
+                          border: `2px solid ${AURORA_THEME.colors.white}`,
+                          borderRadius: '50%',
+                          cursor: 'grab',
+                          boxShadow: AURORA_THEME.elevations.level4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 10,
+                          touchAction: 'none',
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <RotateIcon size={14} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
                       </motion.div>
                     </>
                   )}
