@@ -58,7 +58,7 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'space-between', // Distribuir espacio
-        height: '100vh', // Usar altura fija para el layout
+        height: '100dvh', // Usar altura fija para el layout
         width: '100%',
         padding: 'clamp(20px, 5vw, 40px)',
         position: 'relative',
@@ -204,7 +204,7 @@ const StickerCarousel: React.FC = () => {
         pointerEvents: 'none',
         zIndex: 1,
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
       }}
     >
       {duplicatedStickers.map((sticker, index) => {

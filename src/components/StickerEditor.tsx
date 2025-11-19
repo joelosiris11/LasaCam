@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DownloadIcon, ArrowLeftIcon, TrashIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
@@ -257,7 +257,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       style={{
         background: AURORA_THEME.colors.beige,
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         padding: 0,
@@ -326,7 +326,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
           alignItems: 'center',
           justifyContent: 'center',
           aspectRatio: '9/16',
-          maxHeight: 'calc(100vh - 80px)',
+          maxHeight: 'calc(100dvh - 80px)',
         }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -634,7 +634,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 borderRadius: `${AURORA_THEME.borderRadius.xlarge} ${AURORA_THEME.borderRadius.xlarge} 0 0`,
                 padding: 'clamp(16px, 4vw, 24px)',
                 width: '100%',
-                maxHeight: '70vh',
+                maxHeight: '70dvh',
                 display: 'flex',
                 flexDirection: 'column',
                 boxShadow: AURORA_THEME.elevations.level16,
@@ -703,7 +703,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                   gap: 'clamp(12px, 3vw, 16px)',
                   overflowY: 'auto',
                   paddingRight: 'clamp(4px, 1vw, 8px)',
-                  maxHeight: 'calc(70vh - 100px)',
+                  maxHeight: 'calc(70dvh - 100px)',
                 }}
                 variants={{
                   visible: {

@@ -44,8 +44,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: facingMode,
-            width: { ideal: facingMode === 'user' ? 720 : 1080 },
-            height: { ideal: facingMode === 'user' ? 1280 : 1920 },
             aspectRatio: { ideal: 9 / 16 }
           },
         });
@@ -121,9 +119,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         const offsetX = (videoWidth - canvasWidth) / 2;
         const offsetY = (videoHeight - canvasHeight) / 2;
 
-        // Aplicar transformación de espejo
-        context.translate(canvasWidth, 0);
-        context.scale(-1, 1);
+        // Aplicar transformación de espejo SOLO si es cámara frontal
+        if (facingMode === 'user') {
+          context.translate(canvasWidth, 0);
+          context.scale(-1, 1);
+        }
 
         // Aplicar filtros al canvas
         context.filter = `
@@ -177,7 +177,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         justifyContent: 'center',
         alignItems: 'center',
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         padding: 0,
         margin: 0,
         position: 'fixed',
@@ -192,7 +192,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
       {/* Video container - fullscreen vertical */}
       <div style={{
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         position: 'absolute',
         top: 0,
         left: 0,
@@ -211,10 +211,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
           playsInline
           style={{
             width: 'auto',
-            height: '100vh',
+            height: '100dvh',
             maxWidth: '100vw',
-            objectFit: facingMode === 'user' ? 'contain' : 'cover',
-            transform: 'scaleX(-1)',
+            objectFit: 'cover',
+            transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
           }}
         />
       </div>

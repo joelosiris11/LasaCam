@@ -60,14 +60,14 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
 
     const navigatePhoto = (direction: 'prev' | 'next') => {
         if (selectedIndex === null) return;
-        
+
         let newIndex: number;
         if (direction === 'next') {
             newIndex = selectedIndex < photos.length - 1 ? selectedIndex + 1 : 0;
         } else {
             newIndex = selectedIndex > 0 ? selectedIndex - 1 : photos.length - 1;
         }
-        
+
         setSelectedIndex(newIndex);
         setSelectedPhoto(photos[newIndex]);
     };
@@ -79,7 +79,7 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                 top: 0,
                 left: 0,
                 width: '100vw',
-                height: '100vh',
+                height: '100dvh',
                 background: AURORA_THEME.colors.beige,
                 zIndex: 50,
                 display: 'flex',
@@ -150,10 +150,10 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                 scrollBehavior: 'smooth',
             }}>
                 {loading ? (
-                    <motion.div 
-                        style={{ 
-                            gridColumn: '1 / -1', 
-                            textAlign: 'center', 
+                    <motion.div
+                        style={{
+                            gridColumn: '1 / -1',
+                            textAlign: 'center',
                             padding: '60px 20px',
                             display: 'flex',
                             flexDirection: 'column',
@@ -184,10 +184,10 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                         </p>
                     </motion.div>
                 ) : photos.length === 0 ? (
-                    <motion.div 
-                        style={{ 
-                            gridColumn: '1 / -1', 
-                            textAlign: 'center', 
+                    <motion.div
+                        style={{
+                            gridColumn: '1 / -1',
+                            textAlign: 'center',
                             padding: '60px 20px',
                             display: 'flex',
                             flexDirection: 'column',
@@ -281,7 +281,7 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                             exit={{ opacity: 0 }}
                             onClick={handleCloseModal}
                         />
-                        
+
                         {/* Contenedor de la imagen */}
                         <motion.div
                             style={{
