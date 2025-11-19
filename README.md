@@ -268,6 +268,33 @@ interface AppState {
 
 ---
 
-**Versión:** 1.0.0  
+
+## 🔄 Changelog - 19 Nov 2025 (Mobile First & Backend)
+
+### 📸 Cámara y Captura (Mobile First)
+- **WYSIWYG Capture:** Se implementó una lógica de recorte inteligente. Lo que ves en pantalla es *exactamente* lo que se captura. Se calcula el recorte del sensor basándose en la proporción de la pantalla del usuario.
+- **Alta Resolución Forzada:** Se actualizó `getUserMedia` para pedir resolución 4K/1080p ideal, eliminando el pixelado en dispositivos Android.
+- **Mirroring Inteligente:** La inversión (espejo) ahora solo se aplica a la cámara frontal.
+- **Full Screen Real:** Se eliminaron las bandas negras. La cámara y la foto final ocupan siempre el 100% de la pantalla (`object-fit: cover` simulado).
+
+### 🎨 UI/UX y Diseño
+- **Dynamic Viewport (`dvh`):** Se reemplazaron todos los `100vh` por `100dvh` para evitar que las barras de navegación de los navegadores móviles (Chrome/Safari) tapen botones.
+- **Sticker Editor Mejorado:**
+  - Imagen a pantalla completa real.
+  - Nuevo "handle" visual para redimensionar stickers.
+  - Marca de agua "Powered By Teco".
+- **Galería Híbrida (Grid + Reels):**
+  - **Vista Grid:** Cuadrícula de 3 columnas (estilo Instagram) con corrección de aspecto 9:16 robusta.
+  - **Vista Reels:** Al tocar una foto, se abre un modal de pantalla completa con scroll vertical (Snap Scroll) estilo TikTok.
+  - Navegación fluida entre fotos sin salir del modo pantalla completa.
+
+### ☁️ Backend e Integración
+- **API Producción:** Conectado a `https://test.t-ecogroup.net/backend/api`.
+- **Auto-Upload:** Las fotos se suben automáticamente en segundo plano al llegar a la `SuccessScreen`.
+- **Fallback:** Si la subida falla, el usuario aún puede descargar la foto localmente.
+
+---
+
+**Versión:** 1.1.0  
 **Creado:** Noviembre 2025  
 **Licencia:** MIT

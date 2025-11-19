@@ -173,26 +173,31 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                             style={{
                                 position: 'relative',
                                 width: '100%',
-                                paddingBottom: '177.77%', // Aspect Ratio 9:16 (16 / 9 * 100)
+                                paddingBottom: '177.77%',
                                 cursor: 'pointer',
                                 overflow: 'hidden',
                                 background: '#f0f0f0',
                             }}
                         >
-                            <img
-                                src={photo.url}
-                                alt={`Foto ${index + 1}`}
-                                loading="lazy"
-                                style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    display: 'block',
-                                }}
-                            />
+                            <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                            }}>
+                                <img
+                                    src={photo.url}
+                                    alt={`Foto ${index + 1}`}
+                                    loading="lazy"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                        display: 'block',
+                                    }}
+                                />
+                            </div>
                         </motion.div>
                     ))
                 )}
