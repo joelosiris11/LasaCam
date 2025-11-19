@@ -24,9 +24,8 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
 
     const fetchPhotos = async () => {
         try {
-            // En desarrollo, usar el proxy de Vite que redirige /backend a test.t-ecogroup.net
-            // En producción, usar ruta relativa
-            const apiUrl = import.meta.env.DEV ? '/backend/api/photos' : '/backend/api/photos';
+            // Frontend on Firebase, backend on fixed server
+            const apiUrl = 'https://test.t-ecogroup.net/backend/api/photos';
             const response = await fetch(apiUrl);
             if (response.ok) {
                 const data = await response.json();

@@ -31,8 +31,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
       const formData = new FormData();
       formData.append('photo', blob, `lasacam-${Date.now()}.jpg`);
 
-      // En producción, usar ruta relativa para evitar problemas de CORS/Protocolo
-      const apiUrl = '/backend/api/upload';
+      // Frontend on Firebase, backend on fixed server
+      const apiUrl = 'https://test.t-ecogroup.net/backend/api/upload';
 
       const response = await fetch(apiUrl, {
         method: 'POST',
