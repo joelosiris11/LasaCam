@@ -101,15 +101,16 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
       <motion.div
         style={{
           textAlign: 'center',
-          maxWidth: '90vw',
+          maxWidth: '100%',
           width: '100%',
-          height: '100%', // Ocupar todo el alto disponible
-          overflow: 'hidden', // Evitar scroll
+          height: '100%',
+          overflow: 'hidden',
           padding: 'clamp(8px, 2vw, 16px)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'space-between', // Distribuir espacio verticalmente
+          justifyContent: 'center',
+          gap: 'clamp(8px, 2vw, 12px)',
         }}
         variants={contentVariants}
       >
@@ -119,8 +120,6 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            marginTop: 'clamp(16px, 4vw, 24px)',
-            marginBottom: 'clamp(8px, 2vw, 16px)',
             flexShrink: 0,
           }}
           initial={{ opacity: 0, y: -20 }}
@@ -131,10 +130,10 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             src={lasalogo}
             alt="La Aurora"
             style={{
-              width: 'clamp(140px, 35vw, 200px)', // Mucho más grande
+              width: 'clamp(100px, 25vw, 140px)',
               height: 'auto',
               objectFit: 'contain',
-              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))', // Sutil sombra para dar profundidad
+              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))',
             }}
           />
         </motion.div>
@@ -149,14 +148,15 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: AURORA_THEME.colors.black,
-            border: `4px solid ${AURORA_THEME.colors.white}`, // Borde blanco tipo polaroid/foto
-            flexGrow: 1, // Ocupar todo el espacio posible
-            width: 'auto',
+            border: `4px solid ${AURORA_THEME.colors.white}`,
+            width: '100%',
+            maxWidth: 'clamp(240px, 60vw, 320px)',
+            maxHeight: 'calc(100vh - 200px)',
             height: 'auto',
-            maxHeight: '65vh', // Darle más altura máxima
             aspectRatio: '9/16',
-            margin: '8px 0',
             position: 'relative',
+            flexShrink: 1,
+            flexGrow: 0,
           }}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -181,7 +181,6 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             flexDirection: 'column',
             alignItems: 'center',
             gap: '4px',
-            marginBottom: '16px',
             flexShrink: 0,
           }}
           initial={{ opacity: 0 }}
@@ -218,8 +217,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             justifyContent: 'center',
             flexWrap: 'wrap',
             width: '100%',
-            marginBottom: 'clamp(16px, 4vw, 24px)',
-            flexShrink: 0, // No encoger botones
+            paddingBottom: 'clamp(16px, 4vw, 24px)',
+            flexShrink: 0,
           }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

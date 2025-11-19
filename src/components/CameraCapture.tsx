@@ -44,8 +44,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: facingMode,
-            width: { ideal: 1080 },
-            height: { ideal: 1920 },
+            width: { ideal: facingMode === 'user' ? 720 : 1080 },
+            height: { ideal: facingMode === 'user' ? 1280 : 1920 },
             aspectRatio: { ideal: 9 / 16 }
           },
         });
@@ -213,8 +213,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
             width: 'auto',
             height: '100vh',
             maxWidth: '100vw',
-            objectFit: 'cover',
-            transform: facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(-1)',
+            objectFit: facingMode === 'user' ? 'contain' : 'cover',
+            transform: 'scaleX(-1)',
           }}
         />
       </div>
@@ -258,7 +258,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
       <AnimatePresence>
         {showFilters && (
           <>
-            {/* Overlay oscuro */}
+            {/* Overlay muy transparente - sin blur para no afectar la cámara */}
             <motion.div
               style={{
                 position: 'fixed',
@@ -266,8 +266,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
                 left: 0,
                 right: 0,
                 bottom: 0,
-                background: 'rgba(0, 0, 0, 0.5)',
-                backdropFilter: 'blur(4px)',
+                background: 'rgba(0, 0, 0, 0.1)',
                 zIndex: 14,
               }}
               initial={{ opacity: 0 }}
@@ -281,7 +280,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
                 position: 'fixed',
                 top: 'clamp(156px, 39vw, 216px)',
                 right: 'clamp(12px, 3vw, 24px)',
-                background: AURORA_THEME.colors.beige,
+                background: `rgba(245, 240, 230, 0.4)`,
+                backdropFilter: 'blur(6px)',
                 border: `2px solid ${AURORA_THEME.colors.blueDark}`,
                 borderRadius: AURORA_THEME.borderRadius.xlarge,
                 padding: 'clamp(20px, 5vw, 28px)',
@@ -305,6 +305,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
                   fontWeight: 700,
                   margin: 0,
                   fontFamily: '"DynaPuff", cursive',
+                  textShadow: '0 1px 3px rgba(255, 255, 255, 0.9)',
                 }}>
                   Filtros
                 </h3>
@@ -332,8 +333,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
                       color: AURORA_THEME.colors.blueDark,
                       fontSize: AURORA_THEME.typography.body.fontSize,
                       fontFamily: '"Montserrat", sans-serif',
-                      fontWeight: 500,
+                      fontWeight: 700,
                       marginBottom: 'clamp(4px, 1vw, 6px)',
+                      textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)',
                     }}>
                       {labels[filter]}: {filterSettings[filter]}{filter === 'hue' ? '°' : '%'}
                     </label>
@@ -379,14 +381,17 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
       {/* Barra de navegación inferior */}
       <motion.div
         style={{
-          position: 'absolute',
-          bottom: 'clamp(40px, 10vw, 80px)',
+          position: 'fixed',
+          bottom: 'clamp(20px, 5vw, 40px)',
+          left: 0,
+          right: 0,
           width: '100%',
           display: 'flex',
           justifyContent: 'space-around',
           alignItems: 'center',
           padding: '0 clamp(12px, 3vw, 24px)',
-          zIndex: 10,
+          zIndex: 20,
+          pointerEvents: 'none',
         }}
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -405,6 +410,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
             alignItems: 'center',
             gap: 'clamp(6px, 1.5vw, 8px)',
             width: '80px', // Ancho fijo para alinear
+            pointerEvents: 'auto',
           }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -449,6 +455,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
             justifyContent: 'center',
             padding: 0,
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            pointerEvents: 'auto',
           }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -479,6 +486,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
               cursor: loading ? 'not-allowed' : 'pointer',
               padding: 0,
               opacity: loading ? 0.5 : 1,
+              pointerEvents: 'auto',
             }}
             whileHover={!loading ? { scale: 1.1 } : undefined}
             whileTap={!loading ? { scale: 0.9 } : undefined}
@@ -503,6 +511,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
               border: 'none',
               cursor: 'pointer',
               padding: 0,
+              pointerEvents: 'auto',
             }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}

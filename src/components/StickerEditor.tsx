@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DownloadIcon, ArrowLeftIcon, TrashIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
@@ -159,74 +159,131 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   const handleResizeStart = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
     setSelectedStickerIndex(index);
-    setTouchState({
-      touches: [],
+    const currentSticker = placedStickers[index];
+    resizeDragRef.current = {
       isResizing: true,
       initialMousePos: { x: e.clientX, y: e.clientY },
-      initialScale: placedStickers[index].scale,
-    });
+      initialScale: currentSticker.scale,
+    };
   };
 
   const handleResizeMove = (e: React.MouseEvent, index: number) => {
-    if (!touchState.isResizing || !touchState.initialMousePos) return;
+    if (!resizeDragRef.current.isResizing || !resizeDragRef.current.initialMousePos) return;
     e.stopPropagation();
 
-    const deltaX = e.clientX - touchState.initialMousePos.x;
-    const deltaY = e.clientY - touchState.initialMousePos.y;
-    const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const deltaX = e.clientX - resizeDragRef.current.initialMousePos.x;
+    const deltaY = e.clientY - resizeDragRef.current.initialMousePos.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     const direction = deltaX + deltaY > 0 ? 1 : -1;
 
-    const scaleChange = (delta * direction) / 100;
-    const newScale = Math.max(0.3, Math.min(3, (touchState.initialScale || 1) + scaleChange));
+    const scaleChange = (distance * direction) / 200;
+    const newScale = Math.max(0.3, Math.min(3, resizeDragRef.current.initialScale + scaleChange));
 
     updateSticker(index, { scale: newScale });
+    
+    // Actualizar para movimiento continuo
+    resizeDragRef.current.initialMousePos = { x: e.clientX, y: e.clientY };
+    resizeDragRef.current.initialScale = newScale;
   };
 
   const handleResizeEnd = () => {
     if (resizeDragRef.current.isResizing) {
       resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1 };
     }
-    setTouchState({ touches: [] });
+    setTouchState({ touches: [], isResizing: false });
   };
 
-  const handleResizeTouchStart = (e: React.TouchEvent, index: number) => {
-    // Do not call preventDefault here; React attaches passive listeners for touch events
-    e.stopPropagation();
-    setSelectedStickerIndex(index);
+  const resizeHandleRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
-    const touch = e.touches[0];
-    const currentSticker = placedStickers[index];
+  // Agregar listeners manualmente para evitar el error de passive
+  useEffect(() => {
+    const handles = resizeHandleRefs.current;
+    const touchStartHandlers = new Map<number, (e: TouchEvent) => void>();
+    const touchMoveHandlers = new Map<number, (e: TouchEvent) => void>();
+    const touchEndHandlers = new Map<number, () => void>();
 
-    if (currentSticker) {
-      resizeDragRef.current = {
-        isResizing: true,
-        initialMousePos: { x: touch.clientX, y: touch.clientY },
-        initialScale: currentSticker.scale,
+    handles.forEach((element, index) => {
+      if (!element) return;
+
+      const touchStart = (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedStickerIndex(index);
+          const currentSticker = placedStickersRef.current[index];
+
+          if (currentSticker) {
+            resizeDragRef.current = {
+              isResizing: true,
+              initialMousePos: { x: e.touches[0].clientX, y: e.touches[0].clientY },
+              initialScale: currentSticker.scale,
+            };
+          }
+        }
       };
-    }
-  };
 
-  const handleResizeTouchMove = (e: React.TouchEvent, index: number) => {
-    // Do not call preventDefault here; rely on CSS touch-action: 'none' on the handle
-    e.stopPropagation();
+      const touchMove = (e: TouchEvent) => {
+        if (e.touches.length === 1 && resizeDragRef.current.isResizing) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const { initialMousePos, initialScale } = resizeDragRef.current;
+          if (!initialMousePos) return;
 
-    if (e.touches.length !== 1) return;
+          const touch = e.touches[0];
+          const deltaX = touch.clientX - initialMousePos.x;
+          const deltaY = touch.clientY - initialMousePos.y;
 
-    const { isResizing, initialMousePos, initialScale } = resizeDragRef.current;
-    if (!isResizing || !initialMousePos) return;
+          // Calcular distancia desde el punto inicial
+          const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+          const direction = deltaX + deltaY > 0 ? 1 : -1;
+          
+          // Escalar basado en la distancia del movimiento
+          const scaleChange = (distance * direction) / 200;
+          const newScale = Math.max(0.3, Math.min(3, initialScale + scaleChange));
 
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - initialMousePos.x;
-    const deltaY = touch.clientY - initialMousePos.y;
+          // Usar el índice actual del sticker
+          const currentStickers = [...placedStickersRef.current];
+          if (currentStickers[index]) {
+            currentStickers[index] = { ...currentStickers[index], scale: newScale };
+            setPlacedStickers(currentStickers);
+            
+            // Actualizar posición inicial para movimiento continuo
+            resizeDragRef.current.initialMousePos = { x: touch.clientX, y: touch.clientY };
+            resizeDragRef.current.initialScale = newScale;
+          }
+        }
+      };
 
-    // Project movement onto the 45° diagonal of the handle
-    const movementProj = (deltaX + deltaY) / Math.SQRT2;
-    const scaleChange = movementProj / 150;
+      const touchEnd = () => {
+        if (resizeDragRef.current.isResizing) {
+          resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1 };
+        }
+        setTouchState({ touches: [], isResizing: false });
+      };
 
-    const newScale = Math.max(0.3, Math.min(3, initialScale + scaleChange));
+      element.addEventListener('touchstart', touchStart, { passive: false });
+      element.addEventListener('touchmove', touchMove, { passive: false });
+      element.addEventListener('touchend', touchEnd, { passive: false });
 
-    updateSticker(index, { scale: newScale });
-  };
+      touchStartHandlers.set(index, touchStart);
+      touchMoveHandlers.set(index, touchMove);
+      touchEndHandlers.set(index, touchEnd);
+    });
+
+    return () => {
+      handles.forEach((element, index) => {
+        if (!element) return;
+        const touchStart = touchStartHandlers.get(index);
+        const touchMove = touchMoveHandlers.get(index);
+        const touchEnd = touchEndHandlers.get(index);
+        
+        if (touchStart) element.removeEventListener('touchstart', touchStart);
+        if (touchMove) element.removeEventListener('touchmove', touchMove);
+        if (touchEnd) element.removeEventListener('touchend', touchEnd);
+      });
+    };
+  }, [placedStickers.length]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -479,10 +536,22 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     if (el) stickerRefs.current.set(sticker.id, el);
                     else stickerRefs.current.delete(sticker.id);
                   }}
-                  onTouchStart={(e) => handleTouchStart(e, index)}
-                  onTouchMove={(e) => handleTouchMove(e, index)}
+                  onTouchStart={(e) => {
+                    if (!e.target || !(e.target as HTMLElement).closest('[data-resize-handle="true"]')) {
+                      handleTouchStart(e, index);
+                    }
+                  }}
+                  onTouchMove={(e) => {
+                    if (!resizeDragRef.current.isResizing) {
+                      handleTouchMove(e, index);
+                    }
+                  }}
                   onTouchEnd={handleTouchEnd}
-                  onMouseMove={(e) => touchState.isResizing ? handleResizeMove(e, index) : undefined}
+                  onMouseMove={(e) => {
+                    if (resizeDragRef.current.isResizing && selectedStickerIndex === index) {
+                      handleResizeMove(e, index);
+                    }
+                  }}
                   onMouseUp={handleResizeEnd}
                   onMouseLeave={handleResizeEnd}
                   onClick={() => setSelectedStickerIndex(index)}
@@ -562,11 +631,12 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
 
                       {/* Botón resize - esquina inferior derecha */}
                       <motion.div
+                        ref={(el) => {
+                          if (el) resizeHandleRefs.current.set(index, el);
+                          else resizeHandleRefs.current.delete(index);
+                        }}
                         data-resize-handle="true"
                         onMouseDown={(e) => handleResizeStart(e, index)}
-                        onTouchStart={(e) => handleResizeTouchStart(e, index)}
-                        onTouchMove={(e) => handleResizeTouchMove(e, index)}
-                        onTouchEnd={handleResizeEnd}
                         initial={{ opacity: 0, scale: 0 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0 }}
