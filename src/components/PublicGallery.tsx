@@ -22,8 +22,8 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
 
     const fetchPhotos = async () => {
         try {
-            // En desarrollo usamos localhost:3001, en prod usará la misma URL relativa
-            const apiUrl = import.meta.env.DEV ? 'http://localhost:3001/api/photos' : '/api/photos';
+            // Usar el mismo endpoint que para subir fotos
+            const apiUrl = '/backend/api/photos';
             const response = await fetch(apiUrl);
             if (response.ok) {
                 const data = await response.json();
