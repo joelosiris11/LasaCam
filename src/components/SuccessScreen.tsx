@@ -247,72 +247,74 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
 
 
         {/* Botones de acción */}
-        <motion.div
-          style={{
-            display: 'flex',
-            gap: 'clamp(12px, 3vw, 16px)',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            width: '100%',
-            paddingBottom: 'clamp(16px, 4vw, 24px)',
-            flexShrink: 0,
-          }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <motion.button
-            onClick={downloadImage}
-            whileHover={{ scale: 1.05, boxShadow: AURORA_THEME.elevations.level8 }}
-            whileTap={{ scale: 0.95 }}
+        {!uploading && (
+          <motion.div
             style={{
-              background: AURORA_THEME.colors.blueDark,
-              color: AURORA_THEME.colors.white,
-              border: 'none',
-              padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
-              fontSize: AURORA_THEME.typography.button.fontSize,
-              fontWeight: 600,
-              fontFamily: '"Montserrat", sans-serif',
-              textTransform: AURORA_THEME.typography.button.textTransform,
-              letterSpacing: AURORA_THEME.typography.button.letterSpacing,
-              borderRadius: AURORA_THEME.borderRadius.pill,
-              cursor: 'pointer',
-              boxShadow: AURORA_THEME.elevations.level4,
               display: 'flex',
-              alignItems: 'center',
-              gap: 'clamp(8px, 2vw, 12px)',
+              gap: 'clamp(12px, 3vw, 16px)',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              width: '100%',
+              paddingBottom: 'clamp(16px, 4vw, 24px)',
+              flexShrink: 0,
             }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
           >
-            <DownloadIcon size={24} />
-            Descargar de nuevo
-          </motion.button>
+            <motion.button
+              onClick={downloadImage}
+              whileHover={{ scale: 1.05, boxShadow: AURORA_THEME.elevations.level8 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                background: AURORA_THEME.colors.blueDark,
+                color: AURORA_THEME.colors.white,
+                border: 'none',
+                padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
+                fontSize: AURORA_THEME.typography.button.fontSize,
+                fontWeight: 600,
+                fontFamily: '"Montserrat", sans-serif',
+                textTransform: AURORA_THEME.typography.button.textTransform,
+                letterSpacing: AURORA_THEME.typography.button.letterSpacing,
+                borderRadius: AURORA_THEME.borderRadius.pill,
+                cursor: 'pointer',
+                boxShadow: AURORA_THEME.elevations.level4,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'clamp(8px, 2vw, 12px)',
+              }}
+            >
+              <DownloadIcon size={24} />
+              Descargar de nuevo
+            </motion.button>
 
-          <motion.button
-            onClick={onReset}
-            whileHover={{ scale: 1.05, boxShadow: AURORA_THEME.elevations.level4 }}
-            whileTap={{ scale: 0.95 }}
-            style={{
-              background: AURORA_THEME.colors.white,
-              color: AURORA_THEME.colors.blueDark,
-              border: `2px solid ${AURORA_THEME.colors.blueDark}`,
-              padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
-              fontSize: AURORA_THEME.typography.button.fontSize,
-              fontWeight: 600,
-              fontFamily: '"Montserrat", sans-serif',
-              textTransform: AURORA_THEME.typography.button.textTransform,
-              letterSpacing: AURORA_THEME.typography.button.letterSpacing,
-              borderRadius: AURORA_THEME.borderRadius.pill,
-              cursor: 'pointer',
-              boxShadow: AURORA_THEME.elevations.level2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'clamp(8px, 2vw, 12px)',
-            }}
-          >
-            <RotateIcon size={24} />
-            Crear otra
-          </motion.button>
-        </motion.div>
+            <motion.button
+              onClick={onReset}
+              whileHover={{ scale: 1.05, boxShadow: AURORA_THEME.elevations.level4 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                background: AURORA_THEME.colors.white,
+                color: AURORA_THEME.colors.blueDark,
+                border: `2px solid ${AURORA_THEME.colors.blueDark}`,
+                padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
+                fontSize: AURORA_THEME.typography.button.fontSize,
+                fontWeight: 600,
+                fontFamily: '"Montserrat", sans-serif',
+                textTransform: AURORA_THEME.typography.button.textTransform,
+                letterSpacing: AURORA_THEME.typography.button.letterSpacing,
+                borderRadius: AURORA_THEME.borderRadius.pill,
+                cursor: 'pointer',
+                boxShadow: AURORA_THEME.elevations.level2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'clamp(8px, 2vw, 12px)',
+              }}
+            >
+              <RotateIcon size={24} />
+              Crear otra
+            </motion.button>
+          </motion.div>
+        )}
       </motion.div>
     </motion.div>
   );
