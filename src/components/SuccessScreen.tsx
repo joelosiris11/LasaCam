@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DownloadIcon, RotateIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
@@ -10,18 +10,22 @@ interface SuccessScreenProps {
 }
 
 export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset }) => {
-  const hasDownloadedRef = React.useRef(false);
+  const [uploading, setUploading] = useState(true);
+  const [uploadError, setUploadError] = useState(false);
+  const hasProcessedRef = React.useRef(false);
 
   useEffect(() => {
-    if (!hasDownloadedRef.current) {
-      downloadImage();
-      uploadImage(); // Subir al servidor
-      hasDownloadedRef.current = true;
+    if (!hasProcessedRef.current) {
+      uploadAndDownload();
+      hasProcessedRef.current = true;
     }
   }, []);
 
-  const uploadImage = async () => {
+  const uploadAndDownload = async () => {
     try {
+      setUploading(true);
+      setUploadError(false);
+
       // Convertir base64 a Blob
       const res = await fetch(imageData);
       const blob = await res.blob();
@@ -37,8 +41,6 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
       const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
-        // No establecer Content-Type header manualmente con FormData, 
-        // el navegador lo hace correctamente con el boundary.
       });
 
       if (!response.ok) {
@@ -46,9 +48,18 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
         throw new Error(`Server responded with ${response.status}: ${errorText}`);
       }
 
-      console.log('Foto subida al servidor correctamente');
+      const responseData = await response.json();
+      console.log('Foto subida al servidor correctamente:', responseData);
+
+      // Ahora que se subió exitosamente, descargar la imagen
+      setUploading(false);
+      downloadImage();
     } catch (error) {
       console.error('Error detallado subiendo foto:', error);
+      setUploadError(true);
+      setUploading(false);
+      // Aún así descargar la imagen localmente
+      downloadImage();
     }
   };
 
@@ -194,7 +205,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             margin: 0,
             fontFamily: '"DynaPuff", cursive',
           }}>
-            ¡Perfecto!
+            {uploading ? '¡Subiendo...' : uploadError ? '¡Listo!' : '¡Perfecto!'}
           </h2>
           <p style={{
             color: AURORA_THEME.colors.blueDark,
@@ -203,9 +214,35 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             fontFamily: '"Montserrat", sans-serif',
             opacity: 0.7,
           }}>
-            Foto guardada en tu galería
+            {uploading ? 'Guardando en el servidor...' : uploadError ? 'Foto guardada en tu galería (error al subir)' : 'Foto guardada en tu galería'}
           </p>
         </motion.div>
+
+        {/* Loading spinner mientras sube */}
+        {uploading && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              rotate: 360,
+              transition: {
+                opacity: { duration: 0.3 },
+                scale: { duration: 0.3 },
+                rotate: { duration: 1, repeat: Infinity, ease: 'linear' }
+              }
+            }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            style={{
+              width: 'clamp(40px, 10vw, 60px)',
+              height: 'clamp(40px, 10vw, 60px)',
+              border: `4px solid rgba(0, 31, 91, 0.2)`,
+              borderTop: `4px solid ${AURORA_THEME.colors.blueDark}`,
+              borderRadius: '50%',
+              marginTop: '12px',
+            }}
+          />
+        )}
 
 
 
