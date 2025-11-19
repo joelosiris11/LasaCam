@@ -15,10 +15,6 @@ interface StickerEditorProps {
 
 interface TouchState {
   touches: React.Touch[];
-  initialDistance?: number;
-  initialScale?: number;
-  isResizing?: boolean;
-  initialMousePos?: { x: number; y: number };
 }
 
 export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave, onBackClick }) => {
@@ -27,12 +23,6 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   const stickerRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
   const placedStickersRef = useRef(placedStickers);
-  const resizeDragRef = useRef<{
-    isResizing: boolean;
-    initialMousePos: { x: number; y: number } | null;
-    initialScale: number;
-    currentIndex: number | null;
-  }>({ isResizing: false, initialMousePos: null, initialScale: 1, currentIndex: null });
 
   // Sync ref
   placedStickersRef.current = placedStickers;
@@ -80,29 +70,11 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
     setSelectedStickerIndex(null);
   };
 
-  // Calcular distancia entre dos puntos
-  const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
-
   const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    // Ignore if the touch started on the resize handle
-    const target = e.target as HTMLElement | null;
-    if (target && target.closest('[data-resize-handle="true"]')) return;
-    if (resizeDragRef.current.isResizing) return;
     e.stopPropagation();
     setSelectedStickerIndex(index);
 
-    if (e.touches.length === 2) {
-      const distance = getDistance(e.touches[0], e.touches[1]);
-      setTouchState({
-        touches: Array.from(e.touches),
-        initialDistance: distance,
-        initialScale: placedStickers[index].scale,
-      });
-    } else if (e.touches.length === 1) {
+    if (e.touches.length === 1) {
       setTouchState({
         touches: Array.from(e.touches),
       });
@@ -110,19 +82,10 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   };
 
   const handleTouchMove = (e: React.TouchEvent, index: number) => {
-    // Ignore moves originating from the resize handle
-    const target = e.target as HTMLElement | null;
-    if (target && target.closest('[data-resize-handle="true"]')) return;
-    if (resizeDragRef.current.isResizing) return;
     e.stopPropagation();
 
-    if (e.touches.length === 2 && touchState.initialDistance !== undefined) {
-      // Gesto de pinch para zoom
-      const currentDistance = getDistance(e.touches[0], e.touches[1]);
-      const scale = (currentDistance / touchState.initialDistance) * (touchState.initialScale || 1);
-      updateSticker(index, { scale: Math.max(0.3, Math.min(3, scale)) });
-    } else if (e.touches.length === 1 && touchState.touches.length === 1) {
-      // Gesto de drag para mover
+    // Solo mover con un dedo
+    if (e.touches.length === 1 && touchState.touches.length === 1) {
       if (!containerRef.current) return;
 
       const stickerElement = stickerRefs.current.get(placedStickers[index].id);
@@ -153,224 +116,8 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   };
 
   const handleTouchEnd = () => {
-    setTouchState({ touches: [], isResizing: false });
+    setTouchState({ touches: [] });
   };
-
-  // Handlers para resize con mouse
-  const handleResizeStart = (e: React.MouseEvent, index: number) => {
-    console.log('🖱️ MOUSE START - Resize iniciado', { index, clientX: e.clientX, clientY: e.clientY });
-    e.preventDefault();
-    e.stopPropagation();
-    setSelectedStickerIndex(index);
-    const currentSticker = placedStickers[index];
-    console.log('📏 Sticker actual:', { scale: currentSticker.scale, index });
-    
-    resizeDragRef.current = {
-      isResizing: true,
-      initialMousePos: { x: e.clientX, y: e.clientY },
-      initialScale: currentSticker.scale,
-      currentIndex: index,
-    };
-
-    // Agregar listeners globales para capturar el movimiento fuera del elemento
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!resizeDragRef.current.isResizing || !resizeDragRef.current.initialMousePos) {
-        console.log('⚠️ MOUSE MOVE - Condición no cumplida', {
-          isResizing: resizeDragRef.current.isResizing,
-          hasInitialPos: !!resizeDragRef.current.initialMousePos
-        });
-        return;
-      }
-      
-      const deltaX = e.clientX - resizeDragRef.current.initialMousePos.x;
-      const deltaY = e.clientY - resizeDragRef.current.initialMousePos.y;
-      
-      console.log('🖱️ MOUSE MOVE - Drag activo', {
-        deltaX,
-        deltaY,
-        clientX: e.clientX,
-        clientY: e.clientY,
-        initialScale: resizeDragRef.current.initialScale
-      });
-      
-      // Calcular el cambio de escala basado en el movimiento diagonal
-      // Usar la suma de deltaX y deltaY para movimiento diagonal más intuitivo
-      const diagonalMovement = (deltaX + deltaY) / 2;
-      const scaleChange = diagonalMovement / 100; // Más sensible
-      const newScale = Math.max(0.3, Math.min(3, resizeDragRef.current.initialScale + scaleChange));
-
-      console.log('📐 Calculando escala', {
-        diagonalMovement,
-        scaleChange,
-        newScale,
-        currentIndex: resizeDragRef.current.currentIndex
-      });
-
-      if (resizeDragRef.current.currentIndex !== null) {
-        updateSticker(resizeDragRef.current.currentIndex, { scale: newScale });
-        console.log('✅ Escala actualizada a:', newScale);
-      }
-    };
-
-    const handleGlobalMouseUp = () => {
-      console.log('🖱️ MOUSE UP - Resize terminado');
-      resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1, currentIndex: null };
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      setTouchState({ touches: [], isResizing: false });
-    };
-
-    document.addEventListener('mousemove', handleGlobalMouseMove);
-    document.addEventListener('mouseup', handleGlobalMouseUp);
-    console.log('✅ Listeners globales agregados');
-  };
-
-  const handleResizeMove = (e: React.MouseEvent, index: number) => {
-    // Este handler ya no se usa, pero lo mantenemos por compatibilidad
-    // El resize ahora se maneja con listeners globales
-  };
-
-  const handleResizeEnd = () => {
-    if (resizeDragRef.current.isResizing) {
-      resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1, currentIndex: null };
-    }
-    setTouchState({ touches: [], isResizing: false });
-  };
-
-  const resizeHandleRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-
-  // Agregar listeners manualmente para evitar el error de passive
-  useEffect(() => {
-    const handles = resizeHandleRefs.current;
-    const touchStartHandlers = new Map<number, (e: TouchEvent) => void>();
-    const touchMoveHandlers = new Map<number, (e: TouchEvent) => void>();
-    const touchEndHandlers = new Map<number, () => void>();
-
-    handles.forEach((element, index) => {
-      if (!element) return;
-
-      const touchStart = (e: TouchEvent) => {
-        console.log('👆 TOUCH START - Resize iniciado', {
-          touches: e.touches.length,
-          index,
-          clientX: e.touches[0]?.clientX,
-          clientY: e.touches[0]?.clientY
-        });
-        
-        if (e.touches.length === 1) {
-          e.preventDefault();
-          e.stopPropagation();
-          setSelectedStickerIndex(index);
-          const currentSticker = placedStickersRef.current[index];
-
-          if (currentSticker) {
-            console.log('📏 Sticker actual (touch):', { scale: currentSticker.scale, index });
-            resizeDragRef.current = {
-              isResizing: true,
-              initialMousePos: { x: e.touches[0].clientX, y: e.touches[0].clientY },
-              initialScale: currentSticker.scale,
-              currentIndex: index,
-            };
-            console.log('✅ Estado de resize configurado');
-          } else {
-            console.log('❌ No se encontró el sticker en el índice:', index);
-          }
-        } else {
-          console.log('⚠️ TOUCH START - Múltiples toques o sin toques');
-        }
-      };
-
-      const touchMove = (e: TouchEvent) => {
-        console.log('👆 TOUCH MOVE', {
-          touches: e.touches.length,
-          isResizing: resizeDragRef.current.isResizing,
-          hasInitialPos: !!resizeDragRef.current.initialMousePos,
-          currentIndex: resizeDragRef.current.currentIndex
-        });
-        
-        if (e.touches.length === 1 && resizeDragRef.current.isResizing) {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          const { initialMousePos, initialScale, currentIndex } = resizeDragRef.current;
-          if (!initialMousePos || currentIndex === null) {
-            console.log('⚠️ TOUCH MOVE - Condición no cumplida', {
-              hasInitialPos: !!initialMousePos,
-              currentIndex
-            });
-            return;
-          }
-
-          const touch = e.touches[0];
-          const deltaX = touch.clientX - initialMousePos.x;
-          const deltaY = touch.clientY - initialMousePos.y;
-
-          console.log('👆 TOUCH MOVE - Drag activo', {
-            deltaX,
-            deltaY,
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-            initialScale
-          });
-
-          // Calcular el cambio de escala basado en el movimiento diagonal
-          const diagonalMovement = (deltaX + deltaY) / 2;
-          const scaleChange = diagonalMovement / 100; // Más sensible
-          const newScale = Math.max(0.3, Math.min(3, initialScale + scaleChange));
-
-          console.log('📐 Calculando escala (touch)', {
-            diagonalMovement,
-            scaleChange,
-            newScale,
-            currentIndex
-          });
-
-          // Usar el índice actual del sticker
-          const currentStickers = [...placedStickersRef.current];
-          if (currentStickers[currentIndex]) {
-            currentStickers[currentIndex] = { ...currentStickers[currentIndex], scale: newScale };
-            setPlacedStickers(currentStickers);
-            console.log('✅ Escala actualizada (touch) a:', newScale);
-            
-            // Actualizar posición inicial para movimiento continuo
-            resizeDragRef.current.initialMousePos = { x: touch.clientX, y: touch.clientY };
-            resizeDragRef.current.initialScale = newScale;
-          } else {
-            console.log('❌ No se encontró el sticker en currentIndex:', currentIndex);
-          }
-        }
-      };
-
-      const touchEnd = () => {
-        console.log('👆 TOUCH END - Resize terminado');
-        if (resizeDragRef.current.isResizing) {
-          resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1, currentIndex: null };
-        }
-        setTouchState({ touches: [], isResizing: false });
-      };
-
-      element.addEventListener('touchstart', touchStart, { passive: false });
-      element.addEventListener('touchmove', touchMove, { passive: false });
-      element.addEventListener('touchend', touchEnd, { passive: false });
-
-      touchStartHandlers.set(index, touchStart);
-      touchMoveHandlers.set(index, touchMove);
-      touchEndHandlers.set(index, touchEnd);
-    });
-
-    return () => {
-      handles.forEach((element, index) => {
-        if (!element) return;
-        const touchStart = touchStartHandlers.get(index);
-        const touchMove = touchMoveHandlers.get(index);
-        const touchEnd = touchEndHandlers.get(index);
-        
-        if (touchStart) element.removeEventListener('touchstart', touchStart);
-        if (touchMove) element.removeEventListener('touchmove', touchMove);
-        if (touchEnd) element.removeEventListener('touchend', touchEnd);
-      });
-    };
-  }, [placedStickers.length]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -623,24 +370,9 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     if (el) stickerRefs.current.set(sticker.id, el);
                     else stickerRefs.current.delete(sticker.id);
                   }}
-                  onTouchStart={(e) => {
-                    if (!e.target || !(e.target as HTMLElement).closest('[data-resize-handle="true"]')) {
-                      handleTouchStart(e, index);
-                    }
-                  }}
-                  onTouchMove={(e) => {
-                    if (!resizeDragRef.current.isResizing) {
-                      handleTouchMove(e, index);
-                    }
-                  }}
+                  onTouchStart={(e) => handleTouchStart(e, index)}
+                  onTouchMove={(e) => handleTouchMove(e, index)}
                   onTouchEnd={handleTouchEnd}
-                  onMouseMove={(e) => {
-                    if (resizeDragRef.current.isResizing && selectedStickerIndex === index) {
-                      handleResizeMove(e, index);
-                    }
-                  }}
-                  onMouseUp={handleResizeEnd}
-                  onMouseLeave={handleResizeEnd}
                   onClick={() => setSelectedStickerIndex(index)}
                   initial={{ opacity: 0, scale: 0, rotate: -180 }}
                   animate={{
@@ -659,7 +391,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     position: 'absolute',
                     left: `${sticker.x}px`,
                     top: `${sticker.y}px`,
-                    cursor: resizeDragRef.current.isResizing ? 'nwse-resize' : 'grab',
+                    cursor: 'grab',
                     transform: `scale(${sticker.scale}) rotate(${sticker.rotation}deg)`,
                     border: selectedStickerIndex === index ? `3px solid ${AURORA_THEME.colors.gold}` : 'none',
                     borderRadius: AURORA_THEME.borderRadius.medium,
@@ -667,6 +399,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     backgroundColor: selectedStickerIndex === index ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
                     touchAction: 'none',
                     boxShadow: selectedStickerIndex === index ? AURORA_THEME.elevations.level4 : 'none',
+                    pointerEvents: 'auto',
                   }}
                 >
                   <img
@@ -682,82 +415,37 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     draggable={false}
                   />
 
-                  {/* Controles - esquinas superior izquierda (eliminar) e inferior derecha (resize) */}
+                  {/* Controles - botón eliminar */}
                   {selectedStickerIndex === index && (
-                    <>
-                      {/* Botón eliminar - esquina superior izquierda */}
-                      <motion.div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeSticker(index);
-                        }}
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0 }}
-                        style={{
-                          position: 'absolute',
-                          top: '-8px',
-                          left: '-8px',
-                          width: '28px',
-                          height: '28px',
-                          background: AURORA_THEME.colors.blueDark,
-                          border: `2px solid ${AURORA_THEME.colors.white}`,
-                          borderRadius: '50%',
-                          cursor: 'pointer',
-                          boxShadow: AURORA_THEME.elevations.level4,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          zIndex: 10,
-                        }}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <TrashIcon size={14} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
-                      </motion.div>
-
-                      {/* Botón resize - esquina inferior derecha */}
-                      <motion.div
-                        ref={(el) => {
-                          if (el) resizeHandleRefs.current.set(index, el);
-                          else resizeHandleRefs.current.delete(index);
-                        }}
-                        data-resize-handle="true"
-                        onMouseDown={(e) => handleResizeStart(e, index)}
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0 }}
-                        style={{
-                          position: 'absolute',
-                          bottom: '-8px',
-                          right: '-8px',
-                          width: '28px',
-                          height: '28px',
-                          background: AURORA_THEME.colors.gold,
-                          border: `2px solid ${AURORA_THEME.colors.white}`,
-                          borderRadius: '50%',
-                          cursor: 'nwse-resize',
-                          boxShadow: AURORA_THEME.elevations.level4,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          zIndex: 10,
-                          touchAction: 'none',
-                        }}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <div style={{
-                          width: '0',
-                          height: '0',
-                          borderLeft: '4px solid transparent',
-                          borderRight: '4px solid transparent',
-                          borderTop: '4px solid transparent',
-                          borderBottom: `6px solid ${AURORA_THEME.colors.white}`,
-                          transform: 'rotate(-45deg)',
-                        }} />
-                      </motion.div>
-                    </>
+                    <motion.div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSticker(index);
+                      }}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0 }}
+                      style={{
+                        position: 'absolute',
+                        top: '-8px',
+                        left: '-8px',
+                        width: '28px',
+                        height: '28px',
+                        background: AURORA_THEME.colors.blueDark,
+                        border: `2px solid ${AURORA_THEME.colors.white}`,
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        boxShadow: AURORA_THEME.elevations.level4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                      }}
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <TrashIcon size={14} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
+                    </motion.div>
                   )}
                 </motion.div>
               );
