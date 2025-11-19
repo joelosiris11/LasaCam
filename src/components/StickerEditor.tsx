@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DownloadIcon, ArrowLeftIcon, TrashIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
@@ -140,6 +140,15 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
               logoImg.src = lasalogo;
             });
 
+            // Cargar logo de Teco
+            const tecoImg = new Image();
+            tecoImg.crossOrigin = 'anonymous';
+            await new Promise<void>((resolve) => {
+              tecoImg.onload = () => resolve();
+              tecoImg.onerror = () => resolve();
+              tecoImg.src = '/PoweredByTeco.png';
+            });
+
             const containerRect = containerRef.current!.getBoundingClientRect();
             let containerWidth = containerRect.width;
 
@@ -162,6 +171,18 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
               const logoY = img.height * 0.05; // 5% de margen superior
 
               ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+            }
+
+            // Dibujar logo de Teco (Abajo a la derecha)
+            if (tecoImg.complete && tecoImg.naturalWidth > 0) {
+              const tecoWidth = img.width * 0.50; // 50% del ancho (antes 25%)
+              const tecoAspectRatio = tecoImg.height / tecoImg.width;
+              const tecoHeight = tecoWidth * tecoAspectRatio;
+
+              const tecoX = img.width - tecoWidth - (img.width * 0.05); // 5% margen derecho
+              const tecoY = img.height - tecoHeight - (img.height * 0.03); // 3% margen inferior
+
+              ctx.drawImage(tecoImg, tecoX, tecoY, tecoWidth, tecoHeight);
             }
 
             if (placedStickers.length === 0) {
@@ -309,6 +330,32 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
             height: 'auto',
             objectFit: 'contain',
             filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+          }}
+        />
+      </motion.div>
+
+      {/* Logo Powered By Teco (Abajo Derecha) */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          bottom: 'clamp(120px, 30vw, 160px)', // Encima de la barra de botones
+          right: 'clamp(12px, 3vw, 24px)',
+          zIndex: 10,
+          pointerEvents: 'none', // Permitir clicks a través (si fuera necesario)
+        }}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <img
+          src="/PoweredByTeco.png"
+          alt="Powered By Teco"
+          style={{
+            width: 'clamp(160px, 40vw, 240px)', // x2 tamaño (antes 80-120)
+            height: 'auto',
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+            opacity: 0.9,
           }}
         />
       </motion.div>
