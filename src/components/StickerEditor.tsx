@@ -502,8 +502,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          aspectRatio: '9/16',
-          maxHeight: 'calc(100vh - 80px)',
+          height: '100%', // Ocupar todo el espacio disponible
         }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -525,11 +524,9 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
             src={photoData}
             alt="Captured"
             style={{
-              width: 'auto',
-              height: 'auto',
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover', // Asegurar que cubra todo
               display: 'block',
             }}
           />

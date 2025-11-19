@@ -44,7 +44,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: facingMode,
-            aspectRatio: { ideal: 9 / 16 }
+            // Pedir la máxima resolución posible (4K/1080p) para evitar pixelado
+            width: { ideal: 4096 },
+            height: { ideal: 2160 }
           },
         });
         if (videoRef.current) {
@@ -84,44 +86,44 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d');
       if (context) {
-        const videoWidth = videoRef.current.videoWidth;
-        const videoHeight = videoRef.current.videoHeight;
+        const video = videoRef.current;
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
 
-        // Forzar aspect ratio 9:16 (vertical)
-        let canvasWidth = 1080;
-        let canvasHeight = 1920;
+        // Dimensiones de la pantalla (lo que el usuario ve)
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
 
-        // Si el video no es vertical, ajustar para mantener 9:16
+        // Ratios
         const videoAspect = videoWidth / videoHeight;
-        const targetAspect = 9 / 16;
+        const screenAspect = screenWidth / screenHeight;
 
-        if (Math.abs(videoAspect - targetAspect) > 0.01) {
-          // El video no es 9:16, calcular el área a capturar
-          if (videoAspect > targetAspect) {
-            // Video más ancho, recortar los lados
-            canvasWidth = Math.floor(videoHeight * targetAspect);
-            canvasHeight = videoHeight;
-          } else {
-            // Video más alto, recortar arriba/abajo
-            canvasWidth = videoWidth;
-            canvasHeight = Math.floor(videoWidth / targetAspect);
-          }
+        // Calcular qué parte del video se está mostrando realmente (lógica object-fit: cover)
+        let sourceX, sourceY, sourceWidth, sourceHeight;
+
+        if (screenAspect < videoAspect) {
+          // La pantalla es más alta/estrecha que el video (caso común en móviles verticales con sensor 4:3)
+          // El video se escala por altura, sobra ancho (se recorta a los lados)
+          sourceHeight = videoHeight;
+          sourceWidth = videoHeight * screenAspect;
+          sourceX = (videoWidth - sourceWidth) / 2;
+          sourceY = 0;
         } else {
-          // Video ya es 9:16, usar dimensiones reales
-          canvasWidth = videoWidth;
-          canvasHeight = videoHeight;
+          // La pantalla es más ancha que el video (raro en vertical, posible en tablets)
+          // El video se escala por ancho, sobra altura (se recorta arriba/abajo)
+          sourceWidth = videoWidth;
+          sourceHeight = videoWidth / screenAspect;
+          sourceX = 0;
+          sourceY = (videoHeight - sourceHeight) / 2;
         }
 
-        canvasRef.current.width = canvasWidth;
-        canvasRef.current.height = canvasHeight;
-
-        // Calcular offsets para centrar el recorte
-        const offsetX = (videoWidth - canvasWidth) / 2;
-        const offsetY = (videoHeight - canvasHeight) / 2;
+        // Configurar el canvas con la resolución nativa del recorte (máxima calidad)
+        canvasRef.current.width = sourceWidth;
+        canvasRef.current.height = sourceHeight;
 
         // Aplicar transformación de espejo SOLO si es cámara frontal
         if (facingMode === 'user') {
-          context.translate(canvasWidth, 0);
+          context.translate(sourceWidth, 0);
           context.scale(-1, 1);
         }
 
@@ -133,11 +135,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
           hue-rotate(${filterSettings.hue}deg)
         `.trim().replace(/\s+/g, ' ');
 
-        // Dibujar la porción centrada del video
+        // Dibujar solo la parte visible del video
         context.drawImage(
-          videoRef.current,
-          offsetX, offsetY, canvasWidth, canvasHeight,
-          0, 0, canvasWidth, canvasHeight
+          video,
+          sourceX, sourceY, sourceWidth, sourceHeight, // Source (recorte del video)
+          0, 0, sourceWidth, sourceHeight              // Destination (todo el canvas)
         );
 
         const photoData = canvasRef.current.toDataURL('image/jpeg', 0.95);
