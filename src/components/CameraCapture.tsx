@@ -22,8 +22,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(true);
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [currentDeviceIndex, setCurrentDeviceIndex] = useState(0);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [showFilters, setShowFilters] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
@@ -35,56 +33,17 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
   });
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Obtener lista de cámaras al montar
-  useEffect(() => {
-    const getDevices = async () => {
-      try {
-        const allDevices = await navigator.mediaDevices.enumerateDevices();
-        // Filtrar dispositivos de video, excluyendo explícitamente los gran angulares
-        const videoDevices = allDevices.filter(device => {
-          if (device.kind !== 'videoinput') return false;
-          const label = device.label.toLowerCase();
-          // Bloquear cámaras que digan "wide", "ultra", "0.5"
-          // PERO permitir si es la única cámara trasera (caso borde)
-          return !(label.includes('wide') || label.includes('ultra') || label.includes('0.5'));
-        });
-
-        setDevices(videoDevices);
-
-        // Intentar encontrar la cámara trasera por defecto (Main)
-        const backCameraIndex = videoDevices.findIndex(d =>
-          d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('trasera')
-        );
-        if (backCameraIndex !== -1) {
-          setCurrentDeviceIndex(backCameraIndex);
-        }
-      } catch (error) {
-        console.error('Error enumerating devices:', error);
-      }
-    };
-    getDevices();
-  }, []);
-
   useEffect(() => {
     const startCamera = async () => {
-      if (devices.length === 0) return;
-
       try {
         // Detener stream anterior si existe
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
         }
 
-        const currentDevice = devices[currentDeviceIndex];
-        const isFrontCamera = currentDevice.label.toLowerCase().includes('front') ||
-          currentDevice.label.toLowerCase().includes('delantera') ||
-          currentDevice.label.toLowerCase().includes('user');
-
-        setFacingMode(isFrontCamera ? 'user' : 'environment');
-
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            deviceId: { exact: currentDevice.deviceId },
+            facingMode: facingMode,
             // Resolución 1080p para balancear calidad y peso
             width: { ideal: 1920 },
             height: { ideal: 1080 }
@@ -108,7 +67,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [currentDeviceIndex, devices]);
+  }, [facingMode]);
 
   // Aplicar filtros al video
   useEffect(() => {
@@ -183,17 +142,15 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
           0, 0, sourceWidth, sourceHeight              // Destination (todo el canvas)
         );
 
-        const photoData = canvasRef.current.toDataURL('image/jpeg', 0.95);
+        const photoData = canvasRef.current.toDataURL('image/jpeg', 1);
         onPhotoTaken(photoData);
       }
     }
   };
 
   const toggleCamera = () => {
-    if (devices.length > 1) {
-      setLoading(true);
-      setCurrentDeviceIndex((prev) => (prev + 1) % devices.length);
-    }
+    setLoading(true);
+    setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
   };
 
   const handleGalleryClick = () => {
@@ -486,39 +443,32 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         </motion.button>
 
         {/* Botón principal de captura (Centro) */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '16px',
-        }}>
-          <motion.button
-            onClick={handleTakePhoto}
-            style={{
-              width: 'clamp(80px, 20vw, 100px)',
-              height: 'clamp(80px, 20vw, 100px)',
-              borderRadius: AURORA_THEME.borderRadius.round,
-              background: 'transparent',
-              border: `4px solid ${AURORA_THEME.colors.white}`,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              pointerEvents: 'auto',
-            }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <div style={{
-              width: 'clamp(64px, 16vw, 84px)',
-              height: 'clamp(64px, 16vw, 84px)',
-              borderRadius: AURORA_THEME.borderRadius.round,
-              background: AURORA_THEME.colors.white,
-            }} />
-          </motion.button>
-        </div>
+        <motion.button
+          onClick={handleTakePhoto}
+          style={{
+            width: 'clamp(80px, 20vw, 100px)',
+            height: 'clamp(80px, 20vw, 100px)',
+            borderRadius: AURORA_THEME.borderRadius.round,
+            background: 'transparent',
+            border: `4px solid ${AURORA_THEME.colors.white}`,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            pointerEvents: 'auto',
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <div style={{
+            width: 'clamp(64px, 16vw, 84px)',
+            height: 'clamp(64px, 16vw, 84px)',
+            borderRadius: AURORA_THEME.borderRadius.round,
+            background: AURORA_THEME.colors.white,
+          }} />
+        </motion.button>
 
         {/* Controles Derecha (Filtros y Cámara) */}
         <div style={{
