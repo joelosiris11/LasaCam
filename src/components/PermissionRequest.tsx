@@ -4,6 +4,7 @@ import AURORA_THEME from '../styles/theme';
 import lasalogo from '../assets/buttons/lasalogo.png';
 import bcapturaelpuro from '../assets/buttons/bcapturaelpuro.png';
 import { AVAILABLE_STICKERS } from '../utils/stickers';
+import { LeafIcon } from './icons';
 
 interface PermissionRequestProps {
   onPermissionGranted: () => void;
@@ -55,9 +56,9 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
         background: AURORA_THEME.colors.beige,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '100vh',
+        justifyContent: 'space-between', // Distribuir espacio
+        height: '100vh', // Usar altura fija para el layout
         width: '100%',
         padding: 'clamp(20px, 5vw, 40px)',
         position: 'relative',
@@ -70,10 +71,14 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
       {/* Animación de stickers en el fondo */}
       <StickerCarousel />
 
+      {/* Espaciador superior para empujar el contenido central */}
+      <div />
+
+      {/* Contenido Central: Logo y Botón */}
       <motion.div
         style={{
           textAlign: 'center',
-          maxWidth: '400px',
+          maxWidth: '600px', // Aumentado para permitir logo más grande
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -86,11 +91,10 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
         {/* Logo - mucho más grande */}
         <motion.div
           style={{
-            marginBottom: 'clamp(32px, 8vw, 48px)',
+            marginBottom: 'clamp(40px, 10vw, 60px)', // Más espacio debajo del logo
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 'clamp(12px, 3vw, 16px)',
           }}
           variants={logoVariants}
         >
@@ -98,25 +102,16 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
             src={lasalogo}
             alt="La Aurora Logo"
             style={{
-              width: 'clamp(200px, 50vw, 350px)',
+              width: 'clamp(280px, 80vw, 550px)', // Mucho más grande
               height: 'auto',
               objectFit: 'contain',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))',
             }}
           />
-          <h2 style={{
-            color: AURORA_THEME.colors.blueDark,
-            fontSize: AURORA_THEME.typography.h2.fontSize,
-            fontWeight: 700,
-            margin: 0,
-            fontFamily: '"DynaPuff", cursive',
-            textTransform: 'none',
-            letterSpacing: '1px',
-          }}>
-            Photobooth
-          </h2>
+          {/* Texto "Photobooth" eliminado */}
         </motion.div>
 
-        {/* Botón principal */}
+        {/* Botón principal - un poco más pequeño */}
         <motion.button
           onClick={handleRequestPermission}
           style={{
@@ -124,15 +119,10 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
             border: 'none',
             cursor: 'pointer',
             padding: 0,
-            marginBottom: 'clamp(32px, 8vw, 48px)',
-            boxShadow: AURORA_THEME.elevations.level4,
-            borderRadius: AURORA_THEME.borderRadius.large,
-            overflow: 'hidden',
-            transition: 'all 0.3s ease',
+            transition: 'transform 0.3s ease',
           }}
-          whileHover={{ 
+          whileHover={{
             scale: 1.05,
-            boxShadow: AURORA_THEME.elevations.level8,
           }}
           whileTap={{ scale: 0.95 }}
         >
@@ -143,27 +133,39 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
               width: '100%',
               height: 'auto',
               display: 'block',
-              maxWidth: 'clamp(280px, 70vw, 400px)',
+              maxWidth: 'clamp(180px, 50vw, 280px)', // Más pequeño
             }}
           />
         </motion.button>
+      </motion.div>
 
-        {/* Footer */}
-        <motion.p
+      {/* Footer - Pegado al fondo */}
+      <motion.div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          color: AURORA_THEME.colors.blueDark,
+          opacity: 0.7,
+          position: 'relative',
+          zIndex: 2,
+          marginBottom: 'clamp(10px, 2vw, 20px)',
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.7 }}
+        transition={{ delay: 0.6 }}
+      >
+        <p
           style={{
-            color: AURORA_THEME.colors.blueDark,
             fontSize: AURORA_THEME.typography.body.fontSize,
             margin: 0,
             fontFamily: '"Montserrat", sans-serif',
             fontWeight: 400,
-            opacity: 0.7,
           }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.7 }}
-          transition={{ delay: 0.6 }}
         >
           Hecho en la República Dominicana
-        </motion.p>
+        </p>
+        <LeafIcon size={18} color={AURORA_THEME.colors.blueDark} />
       </motion.div>
     </motion.div>
   );
@@ -212,26 +214,26 @@ const StickerCarousel: React.FC = () => {
         const size = Math.abs(Math.sin(seed) * 40 + 60); // Entre 20px y 100px
         const duration = Math.abs(Math.cos(seed) * 20 + 35); // Entre 15s y 55s
         const delay = (index * 2) % 30; // Espaciar los stickers
-        
+
         // Generar direcciones aleatorias pero consistentes
         const angle = (seed * 137.5) % 360; // Ángulo dorado para distribución uniforme
         const angleRad = (angle * Math.PI) / 180;
-        
+
         // Empezar desde posiciones aleatorias DENTRO de la pantalla
         const startX = (seed * 23.7) % dimensions.width;
         const startY = (seed * 31.3) % dimensions.height;
-        
+
         // Calcular punto de salida en dirección aleatoria
         const exitAngle = angleRad;
         const distance = Math.sqrt(dimensions.width ** 2 + dimensions.height ** 2) + 300;
         const endX = startX + Math.cos(exitAngle) * distance;
         const endY = startY + Math.sin(exitAngle) * distance;
-        
+
         // Rotación suave
         const initialRotate = (seed * 57.3) % 360;
         const rotationSpeed = (Math.sin(seed) * 2 + 1) * 180; // Entre 180 y 540 grados
         const finalRotate = initialRotate + rotationSpeed;
-        
+
         return (
           <motion.div
             key={`${sticker.id}-${index}`}

@@ -123,23 +123,26 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
     } else if (e.touches.length === 1 && touchState.touches.length === 1) {
       // Gesto de drag para mover
       if (!containerRef.current) return;
-      
+
       const stickerElement = stickerRefs.current.get(placedStickers[index].id);
       if (!stickerElement) return;
 
       const containerRect = containerRef.current.getBoundingClientRect();
       const containerWidth = containerRect.width;
       const containerHeight = containerRect.height;
-      
+
       const stickerWidth = stickerElement.offsetWidth;
       const stickerHeight = stickerElement.offsetHeight;
-      
+
       const deltaX = e.touches[0].clientX - touchState.touches[0].clientX;
       const deltaY = e.touches[0].clientY - touchState.touches[0].clientY;
 
+      // Definir margen superior seguro para el logo (reducido para no quitar tanto espacio)
+      const logoSafeMargin = Math.max(70, containerHeight * 0.08);
+
       updateSticker(index, {
         x: Math.max(0, Math.min(placedStickers[index].x + deltaX, containerWidth - stickerWidth)),
-        y: Math.max(0, Math.min(placedStickers[index].y + deltaY, containerHeight - stickerHeight)),
+        y: Math.max(logoSafeMargin, Math.min(placedStickers[index].y + deltaY, containerHeight - stickerHeight)),
       });
 
       setTouchState({
@@ -172,10 +175,10 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
     const deltaY = e.clientY - touchState.initialMousePos.y;
     const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     const direction = deltaX + deltaY > 0 ? 1 : -1;
-    
+
     const scaleChange = (delta * direction) / 100;
     const newScale = Math.max(0.3, Math.min(3, (touchState.initialScale || 1) + scaleChange));
-    
+
     updateSticker(index, { scale: newScale });
   };
 
@@ -190,10 +193,10 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
     // Do not call preventDefault here; React attaches passive listeners for touch events
     e.stopPropagation();
     setSelectedStickerIndex(index);
-    
+
     const touch = e.touches[0];
     const currentSticker = placedStickers[index];
-    
+
     if (currentSticker) {
       resizeDragRef.current = {
         isResizing: true,
@@ -215,13 +218,13 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
     const touch = e.touches[0];
     const deltaX = touch.clientX - initialMousePos.x;
     const deltaY = touch.clientY - initialMousePos.y;
-    
+
     // Project movement onto the 45° diagonal of the handle
     const movementProj = (deltaX + deltaY) / Math.SQRT2;
     const scaleChange = movementProj / 150;
 
     const newScale = Math.max(0.3, Math.min(3, initialScale + scaleChange));
-    
+
     updateSticker(index, { scale: newScale });
   };
 
@@ -237,21 +240,44 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
             canvasRef.current!.height = img.height;
             ctx.drawImage(img, 0, 0);
 
+            // Dibujar logo en la parte superior
+            const logoImg = new Image();
+            logoImg.crossOrigin = 'anonymous';
+            await new Promise<void>((resolve) => {
+              logoImg.onload = () => resolve();
+              logoImg.onerror = () => resolve(); // Continuar aunque falle
+              logoImg.src = lasalogo;
+            });
+
+            const containerRect = containerRef.current!.getBoundingClientRect();
+            let containerWidth = containerRect.width;
+
+            if (containerWidth === 0 || containerWidth < 100) {
+              const containerHeight = containerRect.height;
+              containerWidth = (containerHeight * 9) / 16;
+            }
+
+            const scale = img.width / containerWidth;
+
+            // Dibujar logo
+            if (logoImg.complete && logoImg.naturalWidth > 0) {
+              // Calcular tamaño del logo relativo al canvas
+              // En pantalla es clamp(100px, 25vw, 140px). Usamos una proporción similar.
+              const logoWidth = img.width * 0.35; // 35% del ancho de la foto
+              const logoAspectRatio = logoImg.height / logoImg.width;
+              const logoHeight = logoWidth * logoAspectRatio;
+
+              const logoX = (img.width - logoWidth) / 2; // Centrado
+              const logoY = img.height * 0.05; // 5% de margen superior
+
+              ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+            }
+
             if (placedStickers.length === 0) {
               const canvasData = canvasRef.current!.toDataURL('image/jpeg', 0.95);
               onSave(canvasData);
               return;
             }
-
-            const containerRect = containerRef.current!.getBoundingClientRect();
-            let containerWidth = containerRect.width;
-            
-            if (containerWidth === 0 || containerWidth < 100) {
-              const containerHeight = containerRect.height;
-              containerWidth = (containerHeight * 9) / 16;
-            }
-            
-            const scale = img.width / containerWidth;
 
             let loadedCount = 0;
             const totalStickers = placedStickers.length;
@@ -261,37 +287,43 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
               if (stickerDef) {
                 const stickerImg = new Image();
                 stickerImg.crossOrigin = 'anonymous';
-                
+
                 stickerImg.onload = () => {
                   ctx.save();
-                  
-                  // Escalar posición al tamaño del canvas
+
+                  // Calcular el tamaño base que tenía en pantalla (match CSS clamp(60px, 12vw, 100px))
+                  const viewportWidth = window.innerWidth;
+                  const baseSize = Math.max(60, Math.min(100, viewportWidth * 0.12));
+
+                  // Tamaño visual actual en el contenedor (píxeles de pantalla)
+                  const visualWidth = baseSize * sticker.scale;
+                  const aspectRatio = stickerImg.height / stickerImg.width;
+                  const visualHeight = visualWidth * aspectRatio;
+
+                  // Convertir coordenadas visuales a coordenadas de canvas
+                  // sticker.x/y son relativos al contenedor visual
                   const realX = sticker.x * scale;
                   const realY = sticker.y * scale;
-                  
-                  // El tamaño del sticker en el canvas debe ser proporcional
-                  const stickerDisplayWidth = stickerImg.width * sticker.scale;
-                  const stickerDisplayHeight = stickerImg.height * sticker.scale;
-                  
-                  // Calcular el centro del sticker en coordenadas del canvas
-                  const centerX = realX + (stickerDisplayWidth * scale) / 2;
-                  const centerY = realY + (stickerDisplayHeight * scale) / 2;
-                  
+
+                  // Calcular dimensiones finales en el canvas
+                  const finalWidth = visualWidth * scale;
+                  const finalHeight = visualHeight * scale;
+
+                  // Calcular centro para rotación
+                  const centerX = realX + finalWidth / 2;
+                  const centerY = realY + finalHeight / 2;
+
                   ctx.translate(centerX, centerY);
                   ctx.rotate((sticker.rotation * Math.PI) / 180);
-                  
-                  // Dibujar el sticker con el tamaño escalado correctamente
-                  const finalWidth = stickerImg.width * sticker.scale * scale;
-                  const finalHeight = stickerImg.height * sticker.scale * scale;
-                  
+
                   ctx.drawImage(
-                    stickerImg, 
-                    -finalWidth / 2, 
+                    stickerImg,
+                    -finalWidth / 2,
                     -finalHeight / 2,
                     finalWidth,
                     finalHeight
                   );
-                  
+
                   ctx.restore();
 
                   loadedCount++;
@@ -300,7 +332,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     onSave(canvasData);
                   }
                 };
-                
+
                 stickerImg.onerror = () => {
                   loadedCount++;
                   if (loadedCount === totalStickers) {
@@ -308,19 +340,19 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     onSave(canvasData);
                   }
                 };
-                
+
                 stickerImg.src = stickerDef.icon;
               } else {
                 loadedCount++;
               }
             });
           };
-          
+
           img.onerror = () => {
             console.error('Error loading image');
             setSaving(false);
           };
-          
+
           img.src = photoData;
         }
       }
@@ -357,64 +389,37 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
           zIndex: 10,
           display: 'flex',
           alignItems: 'center',
-          gap: 'clamp(12px, 3vw, 16px)',
+          justifyContent: 'center', // Centrar contenido
         }}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        {/* Botón de volver */}
+        {/* Botón de volver - Posicionado absolutamente a la izquierda */}
         <motion.button
           onClick={onBackClick}
-          style={styles.backButton}
+          style={{
+            ...styles.backButton,
+            position: 'absolute',
+            left: 0,
+          }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
           <ArrowLeftIcon size={36} color={AURORA_THEME.colors.blueDark} strokeWidth={3} />
         </motion.button>
 
-        {/* Logo y texto */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'clamp(12px, 3vw, 16px)',
-        }}>
-          <img
-            src={lasalogo}
-            alt="La Aurora"
-            style={{
-              width: 'clamp(64px, 16vw, 96px)',
-              height: 'auto',
-              objectFit: 'contain',
-            }}
-          />
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-          }}>
-            <h1 style={{
-              color: AURORA_THEME.colors.blueDark,
-              fontSize: 'clamp(20px, 5vw, 28px)',
-              fontWeight: 700,
-              margin: 0,
-              fontFamily: '"DynaPuff", cursive',
-              lineHeight: 1.2,
-            }}>
-              La Aurora
-            </h1>
-            <h2 style={{
-              color: AURORA_THEME.colors.blueDark,
-              fontSize: 'clamp(14px, 3.5vw, 18px)',
-              fontWeight: 600,
-              margin: 0,
-              fontFamily: '"Montserrat", sans-serif',
-              textTransform: 'uppercase',
-              letterSpacing: '2px',
-            }}>
-              EDITAR
-            </h2>
-          </div>
-        </div>
+        {/* Logo centrado y más grande */}
+        <img
+          src={lasalogo}
+          alt="La Aurora"
+          style={{
+            width: 'clamp(100px, 25vw, 140px)', // Logo más grande
+            height: 'auto',
+            objectFit: 'contain',
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+          }}
+        />
       </motion.div>
 
       {/* Contenedor de foto con stickers */}
@@ -482,9 +487,9 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                   onMouseLeave={handleResizeEnd}
                   onClick={() => setSelectedStickerIndex(index)}
                   initial={{ opacity: 0, scale: 0, rotate: -180 }}
-                  animate={{ 
-                    opacity: 1, 
-                    scale: 1, 
+                  animate={{
+                    opacity: 1,
+                    scale: 1,
                     rotate: 0,
                     transition: {
                       type: 'spring',
@@ -520,7 +525,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     }}
                     draggable={false}
                   />
-                  
+
                   {/* Controles - esquinas superior izquierda (eliminar) e inferior derecha (resize) */}
                   {selectedStickerIndex === index && (
                     <>
@@ -638,8 +643,8 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
               width: 'clamp(60px, 15vw, 72px)',
               height: 'clamp(60px, 15vw, 72px)',
               borderRadius: AURORA_THEME.borderRadius.round,
-              background: saving 
-                ? AURORA_THEME.colors.beigeDark 
+              background: saving
+                ? AURORA_THEME.colors.beigeDark
                 : `linear-gradient(135deg, ${AURORA_THEME.colors.blueDark} 0%, ${AURORA_THEME.colors.blueDarkMedium} 100%)`,
               border: `3px solid ${AURORA_THEME.colors.white}`,
               cursor: saving ? 'not-allowed' : 'pointer',
@@ -739,7 +744,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 delay: 0.5,
               }}
             />
-            
+
             <img
               src={bstiker}
               alt="Añadir Stickers"

@@ -10,9 +10,47 @@ interface SuccessScreenProps {
 }
 
 export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset }) => {
+  const hasDownloadedRef = React.useRef(false);
+
   useEffect(() => {
-    downloadImage();
+    if (!hasDownloadedRef.current) {
+      downloadImage();
+      uploadImage(); // Subir al servidor
+      hasDownloadedRef.current = true;
+    }
   }, []);
+
+  const uploadImage = async () => {
+    try {
+      // Convertir base64 a Blob
+      const res = await fetch(imageData);
+      const blob = await res.blob();
+
+      console.log(`Preparando subida. Tamaño: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+
+      const formData = new FormData();
+      formData.append('photo', blob, `lasacam-${Date.now()}.jpg`);
+
+      // En producción, usar ruta relativa para evitar problemas de CORS/Protocolo
+      const apiUrl = '/api/upload';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        // No establecer Content-Type header manualmente con FormData, 
+        // el navegador lo hace correctamente con el boundary.
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server responded with ${response.status}: ${errorText}`);
+      }
+
+      console.log('Foto subida al servidor correctamente');
+    } catch (error) {
+      console.error('Error detallado subiendo foto:', error);
+    }
+  };
 
   const downloadImage = () => {
     const link = document.createElement('a');
@@ -65,12 +103,13 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
           textAlign: 'center',
           maxWidth: '90vw',
           width: '100%',
-          maxHeight: '100vh',
-          overflowY: 'auto',
-          paddingRight: 'clamp(4px, 1vw, 8px)',
+          height: '100%', // Ocupar todo el alto disponible
+          overflow: 'hidden', // Evitar scroll
+          padding: 'clamp(8px, 2vw, 16px)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          justifyContent: 'space-between', // Distribuir espacio verticalmente
         }}
         variants={contentVariants}
       >
@@ -80,8 +119,9 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            marginBottom: 'clamp(24px, 6vw, 40px)',
-            gap: 'clamp(8px, 2vw, 12px)',
+            marginTop: 'clamp(16px, 4vw, 24px)',
+            marginBottom: 'clamp(8px, 2vw, 16px)',
+            flexShrink: 0,
           }}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -91,66 +131,66 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             src={lasalogo}
             alt="La Aurora"
             style={{
-              width: 'clamp(80px, 20vw, 120px)',
+              width: 'clamp(140px, 35vw, 200px)', // Mucho más grande
               height: 'auto',
               objectFit: 'contain',
+              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))', // Sutil sombra para dar profundidad
             }}
           />
-          <h1 style={{
-            color: AURORA_THEME.colors.blueDark,
-            fontSize: AURORA_THEME.typography.h1.fontSize,
-            fontWeight: 700,
-            letterSpacing: '1px',
-            margin: 0,
-            fontFamily: '"DynaPuff", cursive',
-          }}>
-            La Aurora
-          </h1>
-          <h2 style={{
-            color: AURORA_THEME.colors.blueDark,
-            fontSize: AURORA_THEME.typography.h3.fontSize,
-            fontWeight: 600,
-            margin: 0,
-            fontFamily: '"Montserrat", sans-serif',
-            textTransform: 'uppercase',
-            letterSpacing: '2px',
-          }}>
-            PHOTO
-          </h2>
         </motion.div>
 
-        {/* Mensaje de éxito */}
+        {/* Preview - Ahora es el protagonista */}
         <motion.div
           style={{
-            marginBottom: 'clamp(24px, 6vw, 40px)',
+            borderRadius: AURORA_THEME.borderRadius.xlarge,
+            overflow: 'hidden',
+            boxShadow: AURORA_THEME.elevations.level12,
             display: 'flex',
-            flexDirection: 'column',
+            justifyContent: 'center',
             alignItems: 'center',
-            gap: 'clamp(8px, 2vw, 12px)',
+            backgroundColor: AURORA_THEME.colors.black,
+            border: `4px solid ${AURORA_THEME.colors.white}`, // Borde blanco tipo polaroid/foto
+            flexGrow: 1, // Ocupar todo el espacio posible
+            width: 'auto',
+            height: 'auto',
+            maxHeight: '65vh', // Darle más altura máxima
+            aspectRatio: '9/16',
+            margin: '8px 0',
+            position: 'relative',
           }}
-          initial={{ opacity: 0, scale: 0 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
         >
-          <div style={{
-            width: 'clamp(80px, 20vw, 120px)',
-            height: 'clamp(80px, 20vw, 120px)',
-            borderRadius: AURORA_THEME.borderRadius.round,
-            background: AURORA_THEME.colors.gold,
+          <img
+            src={imageData}
+            alt="Final result"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
+        </motion.div>
+
+        {/* Mensaje Compacto */}
+        <motion.div
+          style={{
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: AURORA_THEME.elevations.level8,
-          }}>
-            <span style={{
-              fontSize: 'clamp(48px, 12vw, 72px)',
-            }}>
-              ✓
-            </span>
-          </div>
+            gap: '4px',
+            marginBottom: '16px',
+            flexShrink: 0,
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
           <h2 style={{
             color: AURORA_THEME.colors.blueDark,
-            fontSize: AURORA_THEME.typography.h2.fontSize,
+            fontSize: 'clamp(20px, 5vw, 24px)',
             fontWeight: 700,
             margin: 0,
             fontFamily: '"DynaPuff", cursive',
@@ -159,47 +199,16 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
           </h2>
           <p style={{
             color: AURORA_THEME.colors.blueDark,
-            fontSize: AURORA_THEME.typography.body.fontSize,
+            fontSize: 'clamp(12px, 3vw, 14px)',
             margin: 0,
             fontFamily: '"Montserrat", sans-serif',
-            fontWeight: 400,
-            opacity: 0.8,
-            lineHeight: 1.6,
+            opacity: 0.7,
           }}>
-            Tu foto con stickers se ha descargado correctamente en tu dispositivo.
+            Foto guardada en tu galería
           </p>
         </motion.div>
 
-        {/* Preview */}
-        <motion.div
-          style={{
-            marginBottom: 'clamp(16px, 4vw, 24px)',
-            borderRadius: AURORA_THEME.borderRadius.xlarge,
-            overflow: 'auto',
-            boxShadow: AURORA_THEME.elevations.level12,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-            backgroundColor: AURORA_THEME.colors.black,
-            border: `3px solid ${AURORA_THEME.colors.blueDark}`,
-            maxHeight: '60vh',
-            maxWidth: '90vw',
-          }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          <img
-            src={imageData}
-            alt="Final result"
-            style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block',
-              minWidth: '200px',
-            }}
-          />
-        </motion.div>
+
 
         {/* Botones de acción */}
         <motion.div
@@ -209,6 +218,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             justifyContent: 'center',
             flexWrap: 'wrap',
             width: '100%',
+            marginBottom: 'clamp(16px, 4vw, 24px)',
+            flexShrink: 0, // No encoger botones
           }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
