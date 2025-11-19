@@ -32,7 +32,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
       formData.append('photo', blob, `lasacam-${Date.now()}.jpg`);
 
       // En producción, usar ruta relativa para evitar problemas de CORS/Protocolo
-      const apiUrl = '/api/upload';
+      const apiUrl = '/backend/api/upload';
 
       const response = await fetch(apiUrl, {
         method: 'POST',

@@ -6,9 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
+      '/backend': {
+        target: 'https://test.t-ecogroup.net',
         changeOrigin: true,
+        secure: false,
       },
     },
   },
