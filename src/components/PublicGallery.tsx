@@ -15,8 +15,19 @@ interface PublicGalleryProps {
 export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
     const [photos, setPhotos] = useState<Photo[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+    const reelsContainerRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (selectedIndex !== null && reelsContainerRef.current) {
+            // Cuando se abre el modal, scrollear a la foto seleccionada
+            const selectedElement = reelsContainerRef.current.children[selectedIndex] as HTMLElement;
+            if (selectedElement) {
+                selectedElement.scrollIntoView({ behavior: 'auto' });
+            }
+        }
+    }, [selectedIndex]);
+
 
     useEffect(() => {
         fetchPhotos();
@@ -38,15 +49,7 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
         }
     };
 
-    const handlePhotoClick = (photo: Photo, index: number) => {
-        setSelectedPhoto(photo);
-        setSelectedIndex(index);
-    };
 
-    const handleCloseModal = () => {
-        setSelectedPhoto(null);
-        setSelectedIndex(null);
-    };
 
     const handleDownload = (photo: Photo) => {
         const link = document.createElement('a');
@@ -55,20 +58,6 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    };
-
-    const navigatePhoto = (direction: 'prev' | 'next') => {
-        if (selectedIndex === null) return;
-
-        let newIndex: number;
-        if (direction === 'next') {
-            newIndex = selectedIndex < photos.length - 1 ? selectedIndex + 1 : 0;
-        } else {
-            newIndex = selectedIndex > 0 ? selectedIndex - 1 : photos.length - 1;
-        }
-
-        setSelectedIndex(newIndex);
-        setSelectedPhoto(photos[newIndex]);
     };
 
     return (
@@ -89,394 +78,256 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
             exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         >
-            {/* Header */}
+            {/* Header Flotante */}
             <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
                 padding: 'clamp(16px, 4vw, 24px)',
                 display: 'flex',
                 alignItems: 'center',
-                borderBottom: `2px solid ${AURORA_THEME.colors.blueDark}`,
-                background: AURORA_THEME.colors.white,
-                boxShadow: AURORA_THEME.elevations.level4,
                 zIndex: 10,
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)',
             }}>
                 <button
                     onClick={onBack}
                     style={{
-                        background: 'transparent',
-                        border: 'none',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        borderRadius: '50%',
                         cursor: 'pointer',
                         padding: 0,
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         marginRight: '16px',
                     }}
                 >
-                    <ArrowLeftIcon size={32} color={AURORA_THEME.colors.blueDark} strokeWidth={2.5} />
+                    <ArrowLeftIcon size={24} color="#fff" strokeWidth={2.5} />
                 </button>
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ flex: 1 }}>
                     <h2 style={{
                         margin: 0,
-                        color: AURORA_THEME.colors.blueDark,
+                        color: '#fff',
                         fontFamily: '"DynaPuff", cursive',
                         fontSize: 'clamp(20px, 5vw, 24px)',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.5)',
                     }}>
-                        Galería Pública
+                        Galería
                     </h2>
-                    {!loading && photos.length > 0 && (
-                        <span style={{
-                            color: AURORA_THEME.colors.blueDark,
-                            fontFamily: '"Montserrat", sans-serif',
-                            fontSize: 'clamp(14px, 3.5vw, 16px)',
-                            opacity: 0.7,
-                            marginLeft: '16px',
-                        }}>
-                            {photos.length} {photos.length === 1 ? 'foto' : 'fotos'}
-                        </span>
-                    )}
                 </div>
             </div>
 
-            {/* Grid de Fotos - Optimizado para muchas fotos */}
+            {/* Grid de Fotos */}
             <div style={{
                 flex: 1,
                 overflowY: 'auto',
-                padding: 'clamp(10px, 2.5vw, 16px)',
+                padding: '2px',
+                paddingTop: '80px', // Espacio para el header flotante
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(90px, 18vw, 120px), 1fr))',
-                gap: 'clamp(6px, 1.5vw, 10px)',
+                gridTemplateColumns: 'repeat(3, 1fr)', // 3 columnas
+                gap: '2px',
                 alignContent: 'start',
-                // Optimización de rendimiento
-                willChange: 'scroll-position',
-                // Mejorar scroll suave
-                scrollBehavior: 'smooth',
+                background: AURORA_THEME.colors.white,
             }}>
                 {loading ? (
-                    <motion.div
-                        style={{
-                            gridColumn: '1 / -1',
-                            textAlign: 'center',
-                            padding: '60px 20px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '16px',
-                        }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                    >
+                    <div style={{
+                        gridColumn: '1 / -1',
+                        height: '200px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
                         <motion.div
                             style={{
-                                width: 'clamp(40px, 10vw, 60px)',
-                                height: 'clamp(40px, 10vw, 60px)',
-                                border: `4px solid rgba(0, 31, 91, 0.2)`,
-                                borderTop: `4px solid ${AURORA_THEME.colors.blueDark}`,
+                                width: '40px',
+                                height: '40px',
+                                border: `3px solid rgba(0, 31, 91, 0.2)`,
+                                borderTop: `3px solid ${AURORA_THEME.colors.blueDark}`,
                                 borderRadius: '50%',
                             }}
                             animate={{ rotate: 360 }}
                             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                         />
-                        <p style={{
-                            color: AURORA_THEME.colors.blueDark,
-                            fontSize: 'clamp(14px, 3.5vw, 16px)',
-                            fontFamily: '"Montserrat", sans-serif',
-                            margin: 0,
-                        }}>
-                            Cargando fotos...
-                        </p>
-                    </motion.div>
+                    </div>
                 ) : photos.length === 0 ? (
-                    <motion.div
-                        style={{
-                            gridColumn: '1 / -1',
-                            textAlign: 'center',
-                            padding: '60px 20px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '12px',
-                        }}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                    >
-                        <div style={{
-                            fontSize: 'clamp(48px, 12vw, 64px)',
-                            marginBottom: '8px',
-                        }}>
-                            📸
-                        </div>
-                        <h3 style={{
-                            color: AURORA_THEME.colors.blueDark,
-                            fontSize: 'clamp(18px, 4.5vw, 22px)',
-                            fontFamily: '"DynaPuff", cursive',
-                            margin: 0,
-                            fontWeight: 700,
-                        }}>
-                            Aún no hay fotos
-                        </h3>
-                        <p style={{
-                            color: AURORA_THEME.colors.blueDark,
-                            fontSize: 'clamp(14px, 3.5vw, 16px)',
-                            fontFamily: '"Montserrat", sans-serif',
-                            margin: 0,
-                            opacity: 0.7,
-                        }}>
-                            ¡Sé el primero en compartir!
-                        </p>
-                    </motion.div>
+                    <div style={{
+                        gridColumn: '1 / -1',
+                        padding: '40px 20px',
+                        textAlign: 'center',
+                        color: AURORA_THEME.colors.blueDark,
+                    }}>
+                        <div style={{ fontSize: '48px', marginBottom: '8px' }}>📸</div>
+                        <p style={{ fontFamily: '"Montserrat", sans-serif' }}>Aún no hay fotos</p>
+                    </div>
                 ) : (
                     photos.map((photo, index) => (
-                        <motion.button
+                        <motion.div
                             key={photo.filename}
-                            onClick={() => handlePhotoClick(photo, index)}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.3, delay: Math.min(index * 0.01, 0.3) }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setSelectedIndex(index)}
+                            whileHover={{ filter: 'brightness(0.9)' }}
                             style={{
-                                aspectRatio: '9/16',
-                                borderRadius: AURORA_THEME.borderRadius.small,
-                                overflow: 'hidden',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                border: `1.5px solid ${AURORA_THEME.colors.white}`,
                                 position: 'relative',
-                                background: AURORA_THEME.colors.white,
-                                padding: 0,
+                                width: '100%',
+                                paddingBottom: '177.77%', // Aspect Ratio 9:16 (16 / 9 * 100)
                                 cursor: 'pointer',
+                                overflow: 'hidden',
+                                background: '#f0f0f0',
                             }}
                         >
                             <img
                                 src={photo.url}
                                 alt={`Foto ${index + 1}`}
                                 loading="lazy"
-                                decoding="async"
                                 style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
                                     width: '100%',
                                     height: '100%',
                                     objectFit: 'cover',
                                     display: 'block',
                                 }}
                             />
-                        </motion.button>
+                        </motion.div>
                     ))
                 )}
             </div>
 
-            {/* Modal de vista ampliada */}
+            {/* Modal Reels Full Screen */}
             <AnimatePresence>
-                {selectedPhoto && selectedIndex !== null && (
-                    <>
-                        {/* Overlay */}
-                        <motion.div
+                {selectedIndex !== null && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 100 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 100 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            zIndex: 100,
+                            background: '#000',
+                        }}
+                    >
+                        {/* Botón Cerrar */}
+                        <button
+                            onClick={() => setSelectedIndex(null)}
                             style={{
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                background: 'rgba(0, 0, 0, 0.95)',
-                                zIndex: 100,
-                            }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={handleCloseModal}
-                        />
-
-                        {/* Contenedor de la imagen */}
-                        <motion.div
-                            style={{
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
+                                position: 'absolute',
+                                top: 'clamp(16px, 4vw, 24px)',
+                                left: 'clamp(16px, 4vw, 24px)',
+                                zIndex: 101,
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                background: 'rgba(0, 0, 0, 0.5)',
+                                backdropFilter: 'blur(4px)',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                color: '#fff',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                zIndex: 101,
-                                padding: 'clamp(20px, 5vw, 40px)',
+                                cursor: 'pointer',
+                                fontSize: '24px',
                             }}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                            onClick={handleCloseModal}
                         >
-                            {/* Botón cerrar */}
-                            <motion.button
-                                onClick={handleCloseModal}
-                                style={{
-                                    position: 'absolute',
-                                    top: 'clamp(16px, 4vw, 24px)',
-                                    right: 'clamp(16px, 4vw, 24px)',
-                                    width: 'clamp(40px, 10vw, 48px)',
-                                    height: 'clamp(40px, 10vw, 48px)',
-                                    borderRadius: '50%',
-                                    background: 'rgba(255, 255, 255, 0.2)',
-                                    backdropFilter: 'blur(10px)',
-                                    border: `2px solid ${AURORA_THEME.colors.white}`,
-                                    color: AURORA_THEME.colors.white,
-                                    fontSize: 'clamp(24px, 6vw, 32px)',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    zIndex: 102,
-                                    padding: 0,
-                                }}
-                                whileHover={{ scale: 1.1, background: 'rgba(255, 255, 255, 0.3)' }}
-                                whileTap={{ scale: 0.9 }}
-                            >
-                                ×
-                            </motion.button>
+                            ×
+                        </button>
 
-                            {/* Botón descargar */}
-                            <motion.button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDownload(selectedPhoto);
-                                }}
-                                style={{
-                                    position: 'absolute',
-                                    bottom: 'clamp(16px, 4vw, 24px)',
-                                    right: 'clamp(16px, 4vw, 24px)',
-                                    width: 'clamp(48px, 12vw, 56px)',
-                                    height: 'clamp(48px, 12vw, 56px)',
-                                    borderRadius: '50%',
-                                    background: AURORA_THEME.colors.blueDark,
-                                    border: `2px solid ${AURORA_THEME.colors.white}`,
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    zIndex: 102,
-                                    padding: 0,
-                                    boxShadow: AURORA_THEME.elevations.level8,
-                                }}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                            >
-                                <DownloadIcon size={24} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
-                            </motion.button>
-
-                            {/* Botones de navegación */}
-                            {photos.length > 1 && (
-                                <>
-                                    {/* Botón anterior */}
-                                    <motion.button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigatePhoto('prev');
-                                        }}
-                                        style={{
-                                            position: 'absolute',
-                                            left: 'clamp(16px, 4vw, 24px)',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            width: 'clamp(44px, 11vw, 52px)',
-                                            height: 'clamp(44px, 11vw, 52px)',
-                                            borderRadius: '50%',
-                                            background: 'rgba(255, 255, 255, 0.2)',
-                                            backdropFilter: 'blur(10px)',
-                                            border: `2px solid ${AURORA_THEME.colors.white}`,
-                                            color: AURORA_THEME.colors.white,
-                                            fontSize: 'clamp(24px, 6vw, 32px)',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            zIndex: 102,
-                                            padding: 0,
-                                        }}
-                                        whileHover={{ scale: 1.1, background: 'rgba(255, 255, 255, 0.3)' }}
-                                        whileTap={{ scale: 0.9 }}
-                                    >
-                                        ‹
-                                    </motion.button>
-
-                                    {/* Botón siguiente */}
-                                    <motion.button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigatePhoto('next');
-                                        }}
-                                        style={{
-                                            position: 'absolute',
-                                            right: 'clamp(16px, 4vw, 24px)',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            width: 'clamp(44px, 11vw, 52px)',
-                                            height: 'clamp(44px, 11vw, 52px)',
-                                            borderRadius: '50%',
-                                            background: 'rgba(255, 255, 255, 0.2)',
-                                            backdropFilter: 'blur(10px)',
-                                            border: `2px solid ${AURORA_THEME.colors.white}`,
-                                            color: AURORA_THEME.colors.white,
-                                            fontSize: 'clamp(24px, 6vw, 32px)',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            zIndex: 102,
-                                            padding: 0,
-                                        }}
-                                        whileHover={{ scale: 1.1, background: 'rgba(255, 255, 255, 0.3)' }}
-                                        whileTap={{ scale: 0.9 }}
-                                    >
-                                        ›
-                                    </motion.button>
-                                </>
-                            )}
-
-                            {/* Imagen ampliada */}
-                            <motion.img
-                                key={selectedPhoto.url}
-                                src={selectedPhoto.url}
-                                alt="Full size"
-                                onClick={(e) => e.stopPropagation()}
-                                style={{
-                                    maxWidth: '100%',
-                                    maxHeight: '100%',
-                                    width: 'auto',
-                                    height: 'auto',
-                                    objectFit: 'contain',
-                                    borderRadius: AURORA_THEME.borderRadius.large,
-                                    boxShadow: AURORA_THEME.elevations.level16,
-                                    border: `4px solid ${AURORA_THEME.colors.white}`,
-                                }}
-                                initial={{ scale: 0.8, opacity: 0, rotate: -5 }}
-                                animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                                exit={{ scale: 0.8, opacity: 0, rotate: 5 }}
-                                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                            />
-
-                            {/* Indicador de posición */}
-                            {photos.length > 1 && (
-                                <motion.div
+                        {/* Contenedor Scroll Snap */}
+                        <div
+                            ref={reelsContainerRef}
+                            style={{
+                                height: '100dvh',
+                                overflowY: 'scroll',
+                                scrollSnapType: 'y mandatory',
+                                scrollbarWidth: 'none',
+                            }}
+                        >
+                            {photos.map((photo, index) => (
+                                <div
+                                    key={`reel-${photo.filename}`}
                                     style={{
-                                        position: 'absolute',
-                                        bottom: 'clamp(80px, 20vw, 100px)',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        background: 'rgba(0, 0, 0, 0.6)',
-                                        backdropFilter: 'blur(10px)',
-                                        padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)',
-                                        borderRadius: AURORA_THEME.borderRadius.pill,
-                                        color: AURORA_THEME.colors.white,
-                                        fontSize: 'clamp(12px, 3vw, 14px)',
-                                        fontFamily: '"Montserrat", sans-serif',
-                                        fontWeight: 600,
+                                        height: '100dvh',
+                                        width: '100%',
+                                        scrollSnapAlign: 'start',
+                                        position: 'relative',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        overflow: 'hidden',
                                     }}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 20 }}
                                 >
-                                    {selectedIndex + 1} / {photos.length}
-                                </motion.div>
-                            )}
-                        </motion.div>
-                    </>
+                                    {/* Fondo borroso */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: 0, left: 0, right: 0, bottom: 0,
+                                        backgroundImage: `url(${photo.url})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                        filter: 'blur(20px) brightness(0.5)',
+                                        transform: 'scale(1.1)',
+                                    }} />
+
+                                    {/* Imagen */}
+                                    <img
+                                        src={photo.url}
+                                        alt="Full screen"
+                                        loading={Math.abs(index - selectedIndex) < 2 ? "eager" : "lazy"}
+                                        style={{
+                                            maxWidth: '100%',
+                                            maxHeight: '100%',
+                                            width: 'auto',
+                                            height: 'auto',
+                                            objectFit: 'contain',
+                                            position: 'relative',
+                                            zIndex: 1,
+                                            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                                        }}
+                                    />
+
+                                    {/* Botón Descargar */}
+                                    <motion.button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownload(photo);
+                                        }}
+                                        whileTap={{ scale: 0.9 }}
+                                        style={{
+                                            position: 'absolute',
+                                            bottom: '40px',
+                                            right: '20px',
+                                            zIndex: 2,
+                                            width: '48px',
+                                            height: '48px',
+                                            borderRadius: '50%',
+                                            background: 'rgba(255, 255, 255, 0.2)',
+                                            backdropFilter: 'blur(10px)',
+                                            border: '1px solid rgba(255, 255, 255, 0.5)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            color: '#fff',
+                                        }}
+                                    >
+                                        <DownloadIcon size={24} color="#fff" />
+                                    </motion.button>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
+
+
         </motion.div>
     );
 };
