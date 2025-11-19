@@ -17,6 +17,9 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
     const [loading, setLoading] = useState(true);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const reelsContainerRef = React.useRef<HTMLDivElement>(null);
+    
+    // Detectar Safari
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
     useEffect(() => {
         if (selectedIndex !== null && reelsContainerRef.current) {
@@ -170,7 +173,18 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                             key={photo.filename}
                             onClick={() => setSelectedIndex(index)}
                             whileHover={{ filter: 'brightness(0.9)' }}
-                            style={{
+                            style={isSafari ? {
+                                // Safari: flex con altura fija
+                                cursor: 'pointer',
+                                overflow: 'hidden',
+                                background: '#f0f0f0',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                height: '180px',
+                            } : {
+                                // Chrome y otros: padding-bottom trick
                                 position: 'relative',
                                 width: '100%',
                                 paddingBottom: '177.77%',
@@ -179,25 +193,25 @@ export const PublicGallery: React.FC<PublicGalleryProps> = ({ onBack }) => {
                                 background: '#f0f0f0',
                             }}
                         >
-                            <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                            }}>
-                                <img
-                                    src={photo.url}
-                                    alt={`Foto ${index + 1}`}
-                                    loading="lazy"
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
-                                        display: 'block',
-                                    }}
-                                />
-                            </div>
+                            <img
+                                src={photo.url}
+                                alt={`Foto ${index + 1}`}
+                                loading="lazy"
+                                style={isSafari ? {
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    display: 'block',
+                                } : {
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    display: 'block',
+                                }}
+                            />
                         </motion.div>
                     ))
                 )}
