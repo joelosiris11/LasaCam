@@ -1,27 +1,27 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  FiSmile,
-  FiHeart,
-  FiStar,
-  FiZap,
-  FiMoon,
-  FiCloud,
-  FiMusic,
-  FiFeather,
-} from 'react-icons/fi';
+  SmileIcon,
+  HeartIcon,
+  StarIcon,
+  ZapIcon,
+  MoonIcon,
+  CloudIcon,
+  MusicIcon,
+  FeatherIcon,
+} from './icons';
 import { AVAILABLE_STICKERS } from '../utils/stickers';
 import type { Sticker } from '../types';
 
 const ICON_MAP: Record<string, React.ComponentType<{ size: number; color: string }>> = {
-  FiSmile,
-  FiHeart,
-  FiStar,
-  FiZap,
-  FiMoon,
-  FiCloud,
-  FiMusic,
-  FiFeather,
+  FiSmile: SmileIcon,
+  FiHeart: HeartIcon,
+  FiStar: StarIcon,
+  FiZap: ZapIcon,
+  FiMoon: MoonIcon,
+  FiCloud: CloudIcon,
+  FiMusic: MusicIcon,
+  FiFeather: FeatherIcon,
 };
 
 interface StickerGalleryProps {
@@ -34,30 +34,35 @@ export const StickerGallery: React.FC<StickerGalleryProps> = ({ onStickerSelect 
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.2,
+        staggerChildren: 0.05,
+        delayChildren: 0.1,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, scale: 0.5, y: 20 },
+    hidden: { opacity: 0, scale: 0, rotate: -180 },
     visible: {
       opacity: 1,
       scale: 1,
-      y: 0,
-      transition: { duration: 0.4 },
+      rotate: 0,
+      transition: { 
+        type: 'spring' as const,
+        damping: 15,
+        stiffness: 250,
+        duration: 0.5
+      },
     },
     exit: {
       opacity: 0,
-      scale: 0.5,
-      y: -20,
-      transition: { duration: 0.2 },
+      scale: 0,
+      rotate: 180,
+      transition: { duration: 0.3 },
     },
   };
 
   const getIconComponent = (iconName: string) => {
-    return ICON_MAP[iconName] || FiSmile;
+    return ICON_MAP[iconName];
   };
 
   return (
@@ -72,7 +77,8 @@ export const StickerGallery: React.FC<StickerGalleryProps> = ({ onStickerSelect 
         color: '#FFFFFF',
         marginBottom: '15px',
         fontSize: '16px',
-        fontWeight: '600',
+        fontWeight: '700',
+        fontFamily: '"DynaPuff", cursive',
       }}>
         Selecciona un sticker
       </h3>
@@ -94,8 +100,8 @@ export const StickerGallery: React.FC<StickerGalleryProps> = ({ onStickerSelect 
               key={sticker.id}
               onClick={() => onStickerSelect(sticker)}
               variants={itemVariants}
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.15, rotate: 5 }}
+              whileTap={{ scale: 0.85, rotate: -5 }}
               style={{
                 background: 'rgba(255, 255, 255, 0.1)',
                 border: `2px solid ${sticker.color}`,

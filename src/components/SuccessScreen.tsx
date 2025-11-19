@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiDownload, FiRotateCcw } from 'react-icons/fi';
+import { DownloadIcon, RotateIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
 import lasalogo from '../assets/buttons/lasalogo.png';
 
@@ -99,19 +99,19 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
           <h1 style={{
             color: AURORA_THEME.colors.blueDark,
             fontSize: AURORA_THEME.typography.h1.fontSize,
-            fontWeight: AURORA_THEME.typography.h1.fontWeight,
-            letterSpacing: AURORA_THEME.typography.h1.letterSpacing,
+            fontWeight: 700,
+            letterSpacing: '1px',
             margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+            fontFamily: '"DynaPuff", cursive',
           }}>
-            LA AURORA
+            La Aurora
           </h1>
           <h2 style={{
             color: AURORA_THEME.colors.blueDark,
             fontSize: AURORA_THEME.typography.h3.fontSize,
-            fontWeight: AURORA_THEME.typography.h3.fontWeight,
+            fontWeight: 600,
             margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+            fontFamily: '"Montserrat", sans-serif',
             textTransform: 'uppercase',
             letterSpacing: '2px',
           }}>
@@ -151,17 +151,18 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
           <h2 style={{
             color: AURORA_THEME.colors.blueDark,
             fontSize: AURORA_THEME.typography.h2.fontSize,
-            fontWeight: AURORA_THEME.typography.h2.fontWeight,
+            fontWeight: 700,
             margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+            fontFamily: '"DynaPuff", cursive',
           }}>
-            ¡Perfecto! 🎉
+            ¡Perfecto!
           </h2>
           <p style={{
             color: AURORA_THEME.colors.blueDark,
             fontSize: AURORA_THEME.typography.body.fontSize,
             margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 400,
             opacity: 0.8,
             lineHeight: 1.6,
           }}>
@@ -172,17 +173,17 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
         {/* Preview */}
         <motion.div
           style={{
-            marginBottom: 'clamp(24px, 6vw, 40px)',
+            marginBottom: 'clamp(16px, 4vw, 24px)',
             borderRadius: AURORA_THEME.borderRadius.xlarge,
-            overflow: 'hidden',
+            overflow: 'auto',
             boxShadow: AURORA_THEME.elevations.level12,
-            width: '100%',
-            maxWidth: 'min(90vw, calc(100vh * 9/16))',
             display: 'flex',
             justifyContent: 'center',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             backgroundColor: AURORA_THEME.colors.black,
             border: `3px solid ${AURORA_THEME.colors.blueDark}`,
+            maxHeight: '60vh',
+            maxWidth: '90vw',
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -194,9 +195,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             style={{
               width: '100%',
               height: 'auto',
-              maxHeight: 'clamp(300px, 60vh, 500px)',
               display: 'block',
-              objectFit: 'contain',
+              minWidth: '200px',
             }}
           />
         </motion.div>
@@ -224,8 +224,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
               border: 'none',
               padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
               fontSize: AURORA_THEME.typography.button.fontSize,
-              fontWeight: AURORA_THEME.typography.button.fontWeight,
-              fontFamily: AURORA_THEME.typography.fontFamily,
+              fontWeight: 600,
+              fontFamily: '"Montserrat", sans-serif',
               textTransform: AURORA_THEME.typography.button.textTransform,
               letterSpacing: AURORA_THEME.typography.button.letterSpacing,
               borderRadius: AURORA_THEME.borderRadius.pill,
@@ -236,7 +236,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
               gap: 'clamp(8px, 2vw, 12px)',
             }}
           >
-            <FiDownload size="clamp(18px, 4.5vw, 24px)" />
+            <DownloadIcon size={24} />
             Descargar de nuevo
           </motion.button>
 
@@ -250,8 +250,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
               border: `2px solid ${AURORA_THEME.colors.blueDark}`,
               padding: 'clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px)',
               fontSize: AURORA_THEME.typography.button.fontSize,
-              fontWeight: AURORA_THEME.typography.button.fontWeight,
-              fontFamily: AURORA_THEME.typography.fontFamily,
+              fontWeight: 600,
+              fontFamily: '"Montserrat", sans-serif',
               textTransform: AURORA_THEME.typography.button.textTransform,
               letterSpacing: AURORA_THEME.typography.button.letterSpacing,
               borderRadius: AURORA_THEME.borderRadius.pill,
@@ -262,7 +262,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
               gap: 'clamp(8px, 2vw, 12px)',
             }}
           >
-            <FiRotateCcw size="clamp(18px, 4.5vw, 24px)" />
+            <RotateIcon size={24} />
             Crear otra
           </motion.button>
         </motion.div>

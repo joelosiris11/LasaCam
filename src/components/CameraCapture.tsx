@@ -4,6 +4,7 @@ import AURORA_THEME from '../styles/theme';
 import lasalogo from '../assets/buttons/lasalogo.png';
 import bcamera from '../assets/buttons/bcamera.png';
 import bfiltros from '../assets/buttons/bfiltros.png';
+import { ImageIcon } from './icons';
 
 interface CameraCaptureProps {
   onPhotoTaken: (photoData: string) => void;
@@ -83,11 +84,43 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d');
       if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
+        const videoWidth = videoRef.current.videoWidth;
+        const videoHeight = videoRef.current.videoHeight;
         
-        // Aplicar transformación de espejo (como el video)
-        context.translate(canvasRef.current.width, 0);
+        // Forzar aspect ratio 9:16 (vertical)
+        let canvasWidth = 1080;
+        let canvasHeight = 1920;
+        
+        // Si el video no es vertical, ajustar para mantener 9:16
+        const videoAspect = videoWidth / videoHeight;
+        const targetAspect = 9 / 16;
+        
+        if (Math.abs(videoAspect - targetAspect) > 0.01) {
+          // El video no es 9:16, calcular el área a capturar
+          if (videoAspect > targetAspect) {
+            // Video más ancho, recortar los lados
+            canvasWidth = Math.floor(videoHeight * targetAspect);
+            canvasHeight = videoHeight;
+          } else {
+            // Video más alto, recortar arriba/abajo
+            canvasWidth = videoWidth;
+            canvasHeight = Math.floor(videoWidth / targetAspect);
+          }
+        } else {
+          // Video ya es 9:16, usar dimensiones reales
+          canvasWidth = videoWidth;
+          canvasHeight = videoHeight;
+        }
+        
+        canvasRef.current.width = canvasWidth;
+        canvasRef.current.height = canvasHeight;
+        
+        // Calcular offsets para centrar el recorte
+        const offsetX = (videoWidth - canvasWidth) / 2;
+        const offsetY = (videoHeight - canvasHeight) / 2;
+        
+        // Aplicar transformación de espejo
+        context.translate(canvasWidth, 0);
         context.scale(-1, 1);
         
         // Aplicar filtros al canvas
@@ -98,8 +131,14 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
           hue-rotate(${filterSettings.hue}deg)
         `.trim().replace(/\s+/g, ' ');
         
-        context.drawImage(videoRef.current, 0, 0);
-        const photoData = canvasRef.current.toDataURL('image/jpeg');
+        // Dibujar la porción centrada del video
+        context.drawImage(
+          videoRef.current,
+          offsetX, offsetY, canvasWidth, canvasHeight,
+          0, 0, canvasWidth, canvasHeight
+        );
+        
+        const photoData = canvasRef.current.toDataURL('image/jpeg', 0.95);
         onPhotoTaken(photoData);
       }
     }
@@ -225,21 +264,21 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
           <h1 style={{
             color: AURORA_THEME.colors.blueDark,
             fontSize: 'clamp(20px, 5vw, 28px)',
-            fontWeight: 500,
+            fontWeight: 700,
             margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+            fontFamily: '"DynaPuff", cursive',
             lineHeight: 1.2,
           }}>
-            LA AURORA
+            La Aurora
           </h1>
           <h2 style={{
             color: AURORA_THEME.colors.blueDark,
             fontSize: 'clamp(14px, 3.5vw, 18px)',
-            fontWeight: 400,
+            fontWeight: 600,
             margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+            fontFamily: '"Montserrat", sans-serif',
             textTransform: 'uppercase',
-            letterSpacing: '1px',
+            letterSpacing: '2px',
           }}>
             PHOTO
           </h2>
@@ -252,7 +291,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
           position: 'absolute',
           top: 'clamp(80px, 20vw, 120px)',
           right: 'clamp(12px, 3vw, 24px)',
-          zIndex: 10,
+          zIndex: 20,
           display: 'flex',
           flexDirection: 'column',
           gap: 'clamp(12px, 3vw, 16px)',
@@ -312,7 +351,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         </motion.button>
       </motion.div>
 
-      {/* Panel de filtros - centrado */}
+      {/* Panel de filtros - pestaña desde el botón */}
       <AnimatePresence>
         {showFilters && (
           <>
@@ -337,57 +376,35 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
             <motion.div
               style={{
                 position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
+                top: 'clamp(156px, 39vw, 216px)',
+                right: 'clamp(12px, 3vw, 24px)',
                 background: AURORA_THEME.colors.beige,
                 border: `2px solid ${AURORA_THEME.colors.blueDark}`,
                 borderRadius: AURORA_THEME.borderRadius.xlarge,
-                padding: 'clamp(24px, 6vw, 32px)',
+                padding: 'clamp(20px, 5vw, 28px)',
                 zIndex: 15,
                 boxShadow: AURORA_THEME.elevations.level16,
-                minWidth: 'clamp(280px, 70vw, 400px)',
-                maxWidth: '90vw',
+                minWidth: 'clamp(260px, 65vw, 360px)',
+                maxWidth: '85vw',
               }}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0, transformOrigin: 'top right' }}
+              animate={{ opacity: 1, scale: 1, transformOrigin: 'top right' }}
+              exit={{ opacity: 0, scale: 0, transformOrigin: 'top right' }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
               <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
                 marginBottom: 'clamp(16px, 4vw, 24px)',
               }}>
                 <h3 style={{
                   color: AURORA_THEME.colors.blueDark,
                   fontSize: AURORA_THEME.typography.h3.fontSize,
-                  fontWeight: AURORA_THEME.typography.h3.fontWeight,
+                  fontWeight: 700,
                   margin: 0,
-                  fontFamily: AURORA_THEME.typography.fontFamily,
+                  fontFamily: '"DynaPuff", cursive',
                 }}>
                   Filtros
                 </h3>
-                <motion.button
-                  onClick={resetFilters}
-                  style={{
-                    background: AURORA_THEME.colors.white,
-                    border: `2px solid ${AURORA_THEME.colors.blueDark}`,
-                    borderRadius: AURORA_THEME.borderRadius.medium,
-                    padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)',
-                    color: AURORA_THEME.colors.blueDark,
-                    cursor: 'pointer',
-                    fontSize: AURORA_THEME.typography.body.fontSize,
-                    fontFamily: AURORA_THEME.typography.fontFamily,
-                    fontWeight: 500,
-                    boxShadow: AURORA_THEME.elevations.level2,
-                  }}
-                  whileHover={{ scale: 1.05, boxShadow: AURORA_THEME.elevations.level4 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Reset
-                </motion.button>
               </div>
 
             {/* Controles de filtros */}
@@ -411,7 +428,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
                     display: 'block',
                     color: AURORA_THEME.colors.blueDark,
                     fontSize: AURORA_THEME.typography.body.fontSize,
-                    fontFamily: AURORA_THEME.typography.fontFamily,
+                    fontFamily: '"Montserrat", sans-serif',
+                    fontWeight: 500,
                     marginBottom: 'clamp(4px, 1vw, 6px)',
                   }}>
                     {labels[filter]}: {filterSettings[filter]}{filter === 'hue' ? '°' : '%'}
@@ -430,6 +448,29 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
                 </div>
               );
             })}
+
+            {/* Botón Reset abajo */}
+            <motion.button
+              onClick={resetFilters}
+              style={{
+                width: '100%',
+                marginTop: 'clamp(12px, 3vw, 16px)',
+                background: AURORA_THEME.colors.white,
+                border: `2px solid ${AURORA_THEME.colors.blueDark}`,
+                borderRadius: AURORA_THEME.borderRadius.medium,
+                padding: 'clamp(10px, 2.5vw, 14px)',
+                color: AURORA_THEME.colors.blueDark,
+                cursor: 'pointer',
+                fontSize: AURORA_THEME.typography.body.fontSize,
+                fontFamily: '"Montserrat", sans-serif',
+                fontWeight: 600,
+                boxShadow: AURORA_THEME.elevations.level2,
+              }}
+              whileHover={{ scale: 1.02, boxShadow: AURORA_THEME.elevations.level4 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Reset
+            </motion.button>
             </motion.div>
           </>
         )}
@@ -439,7 +480,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
       <motion.div
         style={{
           position: 'absolute',
-          bottom: 'clamp(12px, 3vw, 24px)',
+          bottom: 'clamp(40px, 10vw, 80px)',
           width: '100%',
           display: 'flex',
           justifyContent: 'space-around',
@@ -462,27 +503,27 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 'clamp(4px, 1vw, 6px)',
+            gap: 'clamp(6px, 1.5vw, 8px)',
           }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
           <div style={{
-            width: 'clamp(24px, 6vw, 32px)',
-            height: 'clamp(24px, 6vw, 32px)',
+            width: 'clamp(32px, 8vw, 44px)',
+            height: 'clamp(32px, 8vw, 44px)',
             background: AURORA_THEME.colors.blueDark,
             borderRadius: AURORA_THEME.borderRadius.small,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            <span style={{ fontSize: 'clamp(16px, 4vw, 20px)' }}>🖼️</span>
+            <ImageIcon size={24} color={AURORA_THEME.colors.white} />
           </div>
           <span style={{
             color: AURORA_THEME.colors.blueDark,
-            fontSize: 'clamp(10px, 2.5vw, 12px)',
-            fontWeight: 500,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+            fontSize: 'clamp(11px, 2.8vw, 14px)',
+            fontWeight: 600,
+            fontFamily: '"Montserrat", sans-serif',
             textTransform: 'uppercase',
           }}>
             GALLERY
@@ -493,11 +534,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
         <motion.button
           onClick={handleTakePhoto}
           style={{
-            width: 'clamp(72px, 18vw, 96px)',
-            height: 'clamp(72px, 18vw, 96px)',
+            width: 'clamp(90px, 22vw, 120px)',
+            height: 'clamp(90px, 22vw, 120px)',
             borderRadius: AURORA_THEME.borderRadius.round,
             background: AURORA_THEME.colors.white,
-            border: `clamp(4px, 1vw, 6px) solid ${AURORA_THEME.colors.gold}`,
+            border: `clamp(5px, 1.2vw, 7px) solid ${AURORA_THEME.colors.gold}`,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -510,11 +551,11 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoTaken }) =>
           whileTap={{ scale: 0.9 }}
         >
           <div style={{
-            width: 'clamp(56px, 14vw, 72px)',
-            height: 'clamp(56px, 14vw, 72px)',
+            width: 'clamp(70px, 17vw, 92px)',
+            height: 'clamp(70px, 17vw, 92px)',
             borderRadius: AURORA_THEME.borderRadius.round,
             background: AURORA_THEME.colors.white,
-            border: `2px solid ${AURORA_THEME.colors.blueDark}`,
+            border: `3px solid ${AURORA_THEME.colors.blueDark}`,
           }} />
         </motion.button>
 
