@@ -45,7 +45,7 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
     visible: {
       opacity: 1,
       scale: 1,
-      transition: { delay: 0.3, duration: 0.6, type: 'spring' },
+      transition: { delay: 0.3, duration: 0.6, type: 'spring' as const },
     },
   };
 
@@ -106,13 +106,13 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
           <h2 style={{
             color: AURORA_THEME.colors.blueDark,
             fontSize: AURORA_THEME.typography.h2.fontSize,
-            fontWeight: AURORA_THEME.typography.h2.fontWeight,
+            fontWeight: 700,
             margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
-            textTransform: 'uppercase',
-            letterSpacing: '3px',
+            fontFamily: '"DynaPuff", cursive',
+            textTransform: 'none',
+            letterSpacing: '1px',
           }}>
-            PHOTOBOOTH
+            Photobooth
           </h2>
         </motion.div>
 
@@ -154,7 +154,8 @@ export const PermissionRequest: React.FC<PermissionRequestProps> = ({ onPermissi
             color: AURORA_THEME.colors.blueDark,
             fontSize: AURORA_THEME.typography.body.fontSize,
             margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 400,
             opacity: 0.7,
           }}
           initial={{ opacity: 0 }}

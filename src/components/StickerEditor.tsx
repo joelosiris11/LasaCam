@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiDownload, FiArrowLeft, FiTrash2 } from 'react-icons/fi';
+import { DownloadIcon, ArrowLeftIcon, TrashIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
 import lasalogo from '../assets/buttons/lasalogo.png';
 import bstiker from '../assets/buttons/bstiker.png';
@@ -17,16 +17,42 @@ interface TouchState {
   touches: React.Touch[];
   initialDistance?: number;
   initialScale?: number;
+  isResizing?: boolean;
+  initialMousePos?: { x: number; y: number };
 }
 
 export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave, onBackClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const stickerRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
+  const placedStickersRef = useRef(placedStickers);
+  const resizeDragRef = useRef<{
+    isResizing: boolean;
+    initialMousePos: { x: number; y: number } | null;
+    initialScale: number;
+  }>({ isResizing: false, initialMousePos: null, initialScale: 1 });
+
+  // Sync ref
+  placedStickersRef.current = placedStickers;
+
   const [selectedStickerIndex, setSelectedStickerIndex] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [touchState, setTouchState] = useState<TouchState>({ touches: [] });
+
+  // Estilos separados
+  const styles = {
+    backButton: {
+      background: 'transparent',
+      border: 'none',
+      cursor: 'pointer' as const,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 0,
+    },
+  };
 
   const addSticker = (sticker: Sticker) => {
     const newSticker: PlacedSticker = {
@@ -61,6 +87,10 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   };
 
   const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    // Ignore if the touch started on the resize handle
+    const target = e.target as HTMLElement | null;
+    if (target && target.closest('[data-resize-handle="true"]')) return;
+    if (resizeDragRef.current.isResizing) return;
     e.stopPropagation();
     setSelectedStickerIndex(index);
 
@@ -79,6 +109,10 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   };
 
   const handleTouchMove = (e: React.TouchEvent, index: number) => {
+    // Ignore moves originating from the resize handle
+    const target = e.target as HTMLElement | null;
+    if (target && target.closest('[data-resize-handle="true"]')) return;
+    if (resizeDragRef.current.isResizing) return;
     e.stopPropagation();
 
     if (e.touches.length === 2 && touchState.initialDistance !== undefined) {
@@ -90,17 +124,22 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       // Gesto de drag para mover
       if (!containerRef.current) return;
       
+      const stickerElement = stickerRefs.current.get(placedStickers[index].id);
+      if (!stickerElement) return;
+
       const containerRect = containerRef.current.getBoundingClientRect();
       const containerWidth = containerRect.width;
       const containerHeight = containerRect.height;
-      const stickerSize = Math.min(containerWidth, containerHeight) * 0.15;
+      
+      const stickerWidth = stickerElement.offsetWidth;
+      const stickerHeight = stickerElement.offsetHeight;
       
       const deltaX = e.touches[0].clientX - touchState.touches[0].clientX;
       const deltaY = e.touches[0].clientY - touchState.touches[0].clientY;
 
       updateSticker(index, {
-        x: Math.max(0, Math.min(placedStickers[index].x + deltaX, containerWidth - stickerSize)),
-        y: Math.max(0, Math.min(placedStickers[index].y + deltaY, containerHeight - stickerSize)),
+        x: Math.max(0, Math.min(placedStickers[index].x + deltaX, containerWidth - stickerWidth)),
+        y: Math.max(0, Math.min(placedStickers[index].y + deltaY, containerHeight - stickerHeight)),
       });
 
       setTouchState({
@@ -110,7 +149,80 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   };
 
   const handleTouchEnd = () => {
+    setTouchState({ touches: [], isResizing: false });
+  };
+
+  // Handlers para resize con mouse
+  const handleResizeStart = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    setSelectedStickerIndex(index);
+    setTouchState({
+      touches: [],
+      isResizing: true,
+      initialMousePos: { x: e.clientX, y: e.clientY },
+      initialScale: placedStickers[index].scale,
+    });
+  };
+
+  const handleResizeMove = (e: React.MouseEvent, index: number) => {
+    if (!touchState.isResizing || !touchState.initialMousePos) return;
+    e.stopPropagation();
+
+    const deltaX = e.clientX - touchState.initialMousePos.x;
+    const deltaY = e.clientY - touchState.initialMousePos.y;
+    const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    const direction = deltaX + deltaY > 0 ? 1 : -1;
+    
+    const scaleChange = (delta * direction) / 100;
+    const newScale = Math.max(0.3, Math.min(3, (touchState.initialScale || 1) + scaleChange));
+    
+    updateSticker(index, { scale: newScale });
+  };
+
+  const handleResizeEnd = () => {
+    if (resizeDragRef.current.isResizing) {
+      resizeDragRef.current = { isResizing: false, initialMousePos: null, initialScale: 1 };
+    }
     setTouchState({ touches: [] });
+  };
+
+  const handleResizeTouchStart = (e: React.TouchEvent, index: number) => {
+    // Do not call preventDefault here; React attaches passive listeners for touch events
+    e.stopPropagation();
+    setSelectedStickerIndex(index);
+    
+    const touch = e.touches[0];
+    const currentSticker = placedStickers[index];
+    
+    if (currentSticker) {
+      resizeDragRef.current = {
+        isResizing: true,
+        initialMousePos: { x: touch.clientX, y: touch.clientY },
+        initialScale: currentSticker.scale,
+      };
+    }
+  };
+
+  const handleResizeTouchMove = (e: React.TouchEvent, index: number) => {
+    // Do not call preventDefault here; rely on CSS touch-action: 'none' on the handle
+    e.stopPropagation();
+
+    if (e.touches.length !== 1) return;
+
+    const { isResizing, initialMousePos, initialScale } = resizeDragRef.current;
+    if (!isResizing || !initialMousePos) return;
+
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - initialMousePos.x;
+    const deltaY = touch.clientY - initialMousePos.y;
+    
+    // Project movement onto the 45° diagonal of the handle
+    const movementProj = (deltaX + deltaY) / Math.SQRT2;
+    const scaleChange = movementProj / 150;
+
+    const newScale = Math.max(0.3, Math.min(3, initialScale + scaleChange));
+    
+    updateSticker(index, { scale: newScale });
   };
 
   const handleSave = async () => {
@@ -153,18 +265,32 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 stickerImg.onload = () => {
                   ctx.save();
                   
+                  // Escalar posición al tamaño del canvas
                   const realX = sticker.x * scale;
                   const realY = sticker.y * scale;
-                  const realStickerWidth = stickerImg.width * sticker.scale;
-                  const realStickerHeight = stickerImg.height * sticker.scale;
                   
-                  const centerX = realX + (realStickerWidth) / 2;
-                  const centerY = realY + (realStickerHeight) / 2;
+                  // El tamaño del sticker en el canvas debe ser proporcional
+                  const stickerDisplayWidth = stickerImg.width * sticker.scale;
+                  const stickerDisplayHeight = stickerImg.height * sticker.scale;
+                  
+                  // Calcular el centro del sticker en coordenadas del canvas
+                  const centerX = realX + (stickerDisplayWidth * scale) / 2;
+                  const centerY = realY + (stickerDisplayHeight * scale) / 2;
                   
                   ctx.translate(centerX, centerY);
                   ctx.rotate((sticker.rotation * Math.PI) / 180);
-                  ctx.scale(sticker.scale, sticker.scale);
-                  ctx.drawImage(stickerImg, -stickerImg.width / 2, -stickerImg.height / 2);
+                  
+                  // Dibujar el sticker con el tamaño escalado correctamente
+                  const finalWidth = stickerImg.width * sticker.scale * scale;
+                  const finalHeight = stickerImg.height * sticker.scale * scale;
+                  
+                  ctx.drawImage(
+                    stickerImg, 
+                    -finalWidth / 2, 
+                    -finalHeight / 2,
+                    finalWidth,
+                    finalHeight
+                  );
                   
                   ctx.restore();
 
@@ -221,69 +347,74 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header */}
+      {/* Header con botón de volver */}
       <motion.div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: 'clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)',
-          background: AURORA_THEME.colors.beige,
-          borderBottom: `1px solid ${AURORA_THEME.colors.beigeDark}`,
+          position: 'absolute',
+          top: 'clamp(12px, 3vw, 24px)',
+          left: 'clamp(12px, 3vw, 24px)',
+          right: 'clamp(12px, 3vw, 24px)',
           zIndex: 10,
-          boxShadow: AURORA_THEME.elevations.level2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'clamp(12px, 3vw, 16px)',
         }}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.2 }}
       >
+        {/* Botón de volver */}
         <motion.button
           onClick={onBackClick}
-          style={{
-            background: 'transparent',
-            border: `2px solid ${AURORA_THEME.colors.blueDark}`,
-            borderRadius: AURORA_THEME.borderRadius.round,
-            color: AURORA_THEME.colors.blueDark,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 'clamp(40px, 10vw, 48px)',
-            height: 'clamp(40px, 10vw, 48px)',
-            boxShadow: AURORA_THEME.elevations.level1,
-          }}
-          whileHover={{ scale: 1.1, boxShadow: AURORA_THEME.elevations.level3 }}
+          style={styles.backButton}
+          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
-          <FiArrowLeft size="clamp(20px, 5vw, 24px)" />
+          <ArrowLeftIcon size={36} color={AURORA_THEME.colors.blueDark} strokeWidth={3} />
         </motion.button>
 
+        {/* Logo y texto */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 'clamp(8px, 2vw, 12px)',
+          gap: 'clamp(12px, 3vw, 16px)',
         }}>
           <img
             src={lasalogo}
             alt="La Aurora"
             style={{
-              width: 'clamp(32px, 8vw, 40px)',
+              width: 'clamp(64px, 16vw, 96px)',
               height: 'auto',
               objectFit: 'contain',
             }}
           />
-          <h2 style={{
-            color: AURORA_THEME.colors.blueDark,
-            fontSize: AURORA_THEME.typography.h3.fontSize,
-            fontWeight: AURORA_THEME.typography.h3.fontWeight,
-            margin: 0,
-            fontFamily: AURORA_THEME.typography.fontFamily,
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
           }}>
-            Editor de Foto
-          </h2>
+            <h1 style={{
+              color: AURORA_THEME.colors.blueDark,
+              fontSize: 'clamp(20px, 5vw, 28px)',
+              fontWeight: 700,
+              margin: 0,
+              fontFamily: '"DynaPuff", cursive',
+              lineHeight: 1.2,
+            }}>
+              La Aurora
+            </h1>
+            <h2 style={{
+              color: AURORA_THEME.colors.blueDark,
+              fontSize: 'clamp(14px, 3.5vw, 18px)',
+              fontWeight: 600,
+              margin: 0,
+              fontFamily: '"Montserrat", sans-serif',
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+            }}>
+              EDITAR
+            </h2>
+          </div>
         </div>
-
-        <div style={{ width: 'clamp(40px, 10vw, 48px)' }} />
       </motion.div>
 
       {/* Contenedor de foto con stickers */}
@@ -339,18 +470,35 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
               return (
                 <motion.div
                   key={sticker.id}
+                  ref={(el) => {
+                    if (el) stickerRefs.current.set(sticker.id, el);
+                    else stickerRefs.current.delete(sticker.id);
+                  }}
                   onTouchStart={(e) => handleTouchStart(e, index)}
                   onTouchMove={(e) => handleTouchMove(e, index)}
                   onTouchEnd={handleTouchEnd}
+                  onMouseMove={(e) => touchState.isResizing ? handleResizeMove(e, index) : undefined}
+                  onMouseUp={handleResizeEnd}
+                  onMouseLeave={handleResizeEnd}
                   onClick={() => setSelectedStickerIndex(index)}
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.5 }}
+                  initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                  animate={{ 
+                    opacity: 1, 
+                    scale: 1, 
+                    rotate: 0,
+                    transition: {
+                      type: 'spring',
+                      damping: 12,
+                      stiffness: 200,
+                      duration: 0.6
+                    }
+                  }}
+                  exit={{ opacity: 0, scale: 0, rotate: 180 }}
                   style={{
                     position: 'absolute',
                     left: `${sticker.x}px`,
                     top: `${sticker.y}px`,
-                    cursor: 'grab',
+                    cursor: resizeDragRef.current.isResizing ? 'nwse-resize' : 'grab',
                     transform: `scale(${sticker.scale}) rotate(${sticker.rotation}deg)`,
                     border: selectedStickerIndex === index ? `3px solid ${AURORA_THEME.colors.gold}` : 'none',
                     borderRadius: AURORA_THEME.borderRadius.medium,
@@ -372,6 +520,83 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                     }}
                     draggable={false}
                   />
+                  
+                  {/* Controles - esquinas superior izquierda (eliminar) e inferior derecha (resize) */}
+                  {selectedStickerIndex === index && (
+                    <>
+                      {/* Botón eliminar - esquina superior izquierda */}
+                      <motion.div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSticker(index);
+                        }}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          left: '-8px',
+                          width: '28px',
+                          height: '28px',
+                          background: AURORA_THEME.colors.blueDark,
+                          border: `2px solid ${AURORA_THEME.colors.white}`,
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          boxShadow: AURORA_THEME.elevations.level4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 10,
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <TrashIcon size={14} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
+                      </motion.div>
+
+                      {/* Botón resize - esquina inferior derecha */}
+                      <motion.div
+                        data-resize-handle="true"
+                        onMouseDown={(e) => handleResizeStart(e, index)}
+                        onTouchStart={(e) => handleResizeTouchStart(e, index)}
+                        onTouchMove={(e) => handleResizeTouchMove(e, index)}
+                        onTouchEnd={handleResizeEnd}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        style={{
+                          position: 'absolute',
+                          bottom: '-8px',
+                          right: '-8px',
+                          width: '28px',
+                          height: '28px',
+                          background: AURORA_THEME.colors.gold,
+                          border: `2px solid ${AURORA_THEME.colors.white}`,
+                          borderRadius: '50%',
+                          cursor: 'nwse-resize',
+                          boxShadow: AURORA_THEME.elevations.level4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 10,
+                          touchAction: 'none',
+                        }}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <div style={{
+                          width: '0',
+                          height: '0',
+                          borderLeft: '4px solid transparent',
+                          borderRight: '4px solid transparent',
+                          borderTop: '4px solid transparent',
+                          borderBottom: `6px solid ${AURORA_THEME.colors.white}`,
+                          transform: 'rotate(-45deg)',
+                        }} />
+                      </motion.div>
+                    </>
+                  )}
                 </motion.div>
               );
             })}
@@ -379,135 +604,155 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
         </div>
       </motion.div>
 
-      {/* Botones flotantes inferiores */}
-      <motion.div
+      {/* Barra inferior con botones */}
+      <div
         style={{
-          position: 'absolute',
-          bottom: 'clamp(12px, 3vw, 24px)',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          position: 'fixed',
+          bottom: 'clamp(40px, 8vw, 60px)',
+          left: 0,
+          right: 0,
+          height: 'clamp(120px, 28vw, 160px)',
           display: 'flex',
-          gap: 'clamp(12px, 2vw, 20px)',
+          alignItems: 'center',
+          justifyContent: 'center',
           zIndex: 5,
+          pointerEvents: 'none',
         }}
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
       >
-        {/* Botón flotante para agregar stickers */}
-        <motion.button
-          onClick={() => setShowModal(true)}
+        {/* Botón de guardar - esquina inferior derecha */}
+        <motion.div
           style={{
-            width: 'clamp(56px, 14vw, 72px)',
-            height: 'clamp(56px, 14vw, 72px)',
-            borderRadius: AURORA_THEME.borderRadius.round,
-            background: AURORA_THEME.colors.white,
-            border: `3px solid ${AURORA_THEME.colors.blueDark}`,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 'clamp(8px, 2vw, 12px)',
-            boxShadow: AURORA_THEME.elevations.level6,
+            position: 'absolute',
+            right: 'clamp(12px, 3vw, 24px)',
+            bottom: 'clamp(20px, 5vw, 32px)',
+            pointerEvents: 'auto',
           }}
-          whileHover={{ scale: 1.15, boxShadow: AURORA_THEME.elevations.level8 }}
-          whileTap={{ scale: 0.9 }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
         >
-          <img
-            src={bstiker}
-            alt="Añadir Stickers"
+          <motion.button
+            onClick={handleSave}
+            disabled={saving}
             style={{
-              width: 'clamp(24px, 6vw, 32px)',
-              height: 'auto',
-              objectFit: 'contain',
-            }}
-          />
-        </motion.button>
-
-        {/* Botón para guardar */}
-        <motion.button
-          onClick={handleSave}
-          disabled={saving}
-          style={{
-            width: 'clamp(56px, 14vw, 72px)',
-            height: 'clamp(56px, 14vw, 72px)',
-            borderRadius: AURORA_THEME.borderRadius.round,
-            background: saving ? AURORA_THEME.colors.beigeDark : AURORA_THEME.colors.white,
-            border: `3px solid ${AURORA_THEME.colors.blueDark}`,
-            cursor: saving ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 'clamp(8px, 2vw, 12px)',
-            boxShadow: AURORA_THEME.elevations.level6,
-            opacity: saving ? 0.7 : 1,
-          }}
-          whileHover={!saving ? { scale: 1.15, boxShadow: AURORA_THEME.elevations.level8 } : undefined}
-          whileTap={!saving ? { scale: 0.9 } : undefined}
-        >
-          <FiDownload size="clamp(24px, 6vw, 32px)" color={AURORA_THEME.colors.blueDark} strokeWidth={2} />
-        </motion.button>
-      </motion.div>
-
-      {/* Panel de control simple - solo botón eliminar */}
-      <AnimatePresence>
-        {selectedStickerIndex !== null && (
-          <motion.div
-            style={{
-              position: 'absolute',
-              bottom: 'clamp(100px, 25vw, 140px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: AURORA_THEME.colors.white,
-              border: `2px solid ${AURORA_THEME.colors.blueDark}`,
-              borderRadius: AURORA_THEME.borderRadius.large,
-              padding: 'clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)',
+              width: 'clamp(60px, 15vw, 72px)',
+              height: 'clamp(60px, 15vw, 72px)',
+              borderRadius: AURORA_THEME.borderRadius.round,
+              background: saving 
+                ? AURORA_THEME.colors.beigeDark 
+                : `linear-gradient(135deg, ${AURORA_THEME.colors.blueDark} 0%, ${AURORA_THEME.colors.blueDarkMedium} 100%)`,
+              border: `3px solid ${AURORA_THEME.colors.white}`,
+              cursor: saving ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 'clamp(12px, 3vw, 16px)',
-              zIndex: 4,
-              boxShadow: AURORA_THEME.elevations.level8,
-              maxWidth: '90%',
+              justifyContent: 'center',
+              padding: 0,
+              boxShadow: saving ? AURORA_THEME.elevations.level3 : AURORA_THEME.elevations.level6,
+              opacity: saving ? 0.7 : 1,
             }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+            whileHover={!saving ? { scale: 1.1 } : undefined}
+            whileTap={!saving ? { scale: 0.95 } : undefined}
           >
-            <div style={{ 
-              flex: 1, 
-              color: AURORA_THEME.colors.blueDark, 
-              fontSize: AURORA_THEME.typography.body.fontSize, 
-              fontFamily: AURORA_THEME.typography.fontFamily,
-            }}>
-              📌 Arrastra • 🤏 Pinch zoom • 🔄 Rota
-            </div>
+            <DownloadIcon size={28} color={AURORA_THEME.colors.white} strokeWidth={2.5} />
+          </motion.button>
+        </motion.div>
 
-            <motion.button
-              onClick={() => removeSticker(selectedStickerIndex)}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+        {/* Botón central para agregar stickers */}
+        <motion.div
+          style={{
+            pointerEvents: 'auto',
+          }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+        >
+          <motion.button
+            onClick={() => setShowModal(true)}
+            style={{
+              width: 'clamp(95px, 23vw, 120px)',
+              height: 'clamp(95px, 23vw, 120px)',
+              borderRadius: AURORA_THEME.borderRadius.round,
+              background: `linear-gradient(135deg, ${AURORA_THEME.colors.gold} 0%, ${AURORA_THEME.colors.goldLight} 100%)`,
+              border: `4px solid ${AURORA_THEME.colors.white}`,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              boxShadow: `0 8px 24px rgba(212, 175, 55, 0.4), ${AURORA_THEME.elevations.level8}`,
+              position: 'relative',
+            }}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.95, rotate: -5 }}
+            animate={{
+              boxShadow: [
+                '0 8px 24px rgba(212, 175, 55, 0.4)',
+                '0 8px 32px rgba(212, 175, 55, 0.6)',
+                '0 8px 24px rgba(212, 175, 55, 0.4)',
+              ],
+            }}
+            transition={{
+              boxShadow: {
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              },
+            }}
+          >
+            {/* Anillos de animación */}
+            <motion.div
               style={{
-                padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)',
-                background: AURORA_THEME.colors.white,
-                color: AURORA_THEME.colors.blueDark,
-                border: `2px solid ${AURORA_THEME.colors.blueDark}`,
-                borderRadius: AURORA_THEME.borderRadius.medium,
-                cursor: 'pointer',
-                fontSize: AURORA_THEME.typography.body.fontSize,
-                fontWeight: 500,
-                fontFamily: AURORA_THEME.typography.fontFamily,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'clamp(6px, 1.5vw, 8px)',
-                boxShadow: AURORA_THEME.elevations.level2,
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                borderRadius: AURORA_THEME.borderRadius.round,
+                border: `3px solid ${AURORA_THEME.colors.gold}`,
+                opacity: 0.6,
               }}
-            >
-              <FiTrash2 size="clamp(16px, 4vw, 20px)" />
-              Eliminar
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              animate={{
+                scale: [1, 1.3, 1],
+                opacity: [0.6, 0, 0.6],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeOut',
+              }}
+            />
+            <motion.div
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                borderRadius: AURORA_THEME.borderRadius.round,
+                border: `3px solid ${AURORA_THEME.colors.gold}`,
+                opacity: 0.4,
+              }}
+              animate={{
+                scale: [1, 1.5, 1],
+                opacity: [0.4, 0, 0.4],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeOut',
+                delay: 0.5,
+              }}
+            />
+            
+            <img
+              src={bstiker}
+              alt="Añadir Stickers"
+              style={{
+                width: 'clamp(48px, 12vw, 62px)',
+                height: 'auto',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+              }}
+            />
+          </motion.button>
+        </motion.div>
+      </div>
 
       {/* Modal de stickers */}
       <AnimatePresence>
@@ -559,9 +804,9 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 <h3 style={{
                   color: AURORA_THEME.colors.blueDark,
                   fontSize: AURORA_THEME.typography.h3.fontSize,
-                  fontWeight: AURORA_THEME.typography.h3.fontWeight,
+                  fontWeight: 700,
                   margin: 0,
-                  fontFamily: AURORA_THEME.typography.fontFamily,
+                  fontFamily: '"DynaPuff", cursive',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 'clamp(8px, 2vw, 12px)',
