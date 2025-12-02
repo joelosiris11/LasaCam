@@ -3,6 +3,7 @@ export interface Sticker {
   icon: string;
   name: string;
   color: string;
+  company: string;
 }
 
 export interface PlacedSticker {

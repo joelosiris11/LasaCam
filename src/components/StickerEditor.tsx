@@ -4,7 +4,7 @@ import { DownloadIcon, ArrowLeftIcon, TrashIcon, ResizeIcon, RotateIcon } from '
 import AURORA_THEME from '../styles/theme';
 import lasalogo from '../assets/buttons/lasalogo.png';
 import bstiker from '../assets/buttons/bstiker.png';
-import { AVAILABLE_STICKERS } from '../utils/stickers';
+import { AVAILABLE_STICKERS, COMPANIES, getStickersByCompany, getCompanyColor } from '../utils/stickers';
 import type { Sticker, PlacedSticker } from '../types';
 
 interface StickerEditorProps {
@@ -39,6 +39,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [touchState, setTouchState] = useState<TouchState>({ touches: [] });
+  const [selectedCompany, setSelectedCompany] = useState<string>(COMPANIES[0]);
 
   // Estilos separados
   const styles = {
@@ -960,7 +961,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: 'clamp(16px, 4vw, 24px)',
+                marginBottom: 'clamp(12px, 3vw, 16px)',
               }}>
                 <h3 style={{
                   color: AURORA_THEME.colors.blueDark,
@@ -1006,7 +1007,51 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 </motion.button>
               </div>
 
-              {/* Grid de stickers con scroll */}
+              {/* Scroll horizontal de empresas */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 'clamp(8px, 2vw, 12px)',
+                  overflowX: 'auto',
+                  paddingBottom: 'clamp(12px, 3vw, 16px)',
+                  marginBottom: 'clamp(12px, 3vw, 16px)',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
+              >
+                {COMPANIES.map((company) => (
+                  <motion.button
+                    key={company}
+                    onClick={() => setSelectedCompany(company)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                      background: selectedCompany === company
+                        ? getCompanyColor(company)
+                        : AURORA_THEME.colors.white,
+                      color: selectedCompany === company
+                        ? AURORA_THEME.colors.white
+                        : AURORA_THEME.colors.blueDark,
+                      border: `2px solid ${selectedCompany === company ? getCompanyColor(company) : AURORA_THEME.colors.blueDark}`,
+                      borderRadius: AURORA_THEME.borderRadius.large,
+                      padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 20px)',
+                      cursor: 'pointer',
+                      fontFamily: '"DynaPuff", cursive',
+                      fontSize: 'clamp(12px, 3vw, 14px)',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      boxShadow: selectedCompany === company
+                        ? AURORA_THEME.elevations.level4
+                        : AURORA_THEME.elevations.level2,
+                    }}
+                  >
+                    {company}
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Grid de stickers de la empresa seleccionada */}
               <motion.div
                 style={{
                   display: 'grid',
@@ -1014,7 +1059,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                   gap: 'clamp(12px, 3vw, 16px)',
                   overflowY: 'auto',
                   paddingRight: 'clamp(4px, 1vw, 8px)',
-                  maxHeight: 'calc(70vh - 100px)',
+                  maxHeight: 'calc(70vh - 180px)',
                 }}
                 variants={{
                   visible: {
@@ -1023,8 +1068,9 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 }}
                 initial="hidden"
                 animate="visible"
+                key={selectedCompany}
               >
-                {AVAILABLE_STICKERS.map((sticker) => (
+                {getStickersByCompany(selectedCompany).map((sticker) => (
                   <motion.button
                     key={sticker.id}
                     onClick={() => addSticker(sticker)}
