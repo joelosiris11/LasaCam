@@ -27,6 +27,7 @@ interface TouchState {
 
 export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave, onBackClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stickerRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
@@ -324,7 +325,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (canvasRef.current && containerRef.current) {
+      if (canvasRef.current && containerRef.current && imageRef.current) {
         const ctx = canvasRef.current.getContext('2d');
         if (ctx) {
           const img = new Image();
@@ -338,7 +339,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
             logoImg.crossOrigin = 'anonymous';
             await new Promise<void>((resolve) => {
               logoImg.onload = () => resolve();
-              logoImg.onerror = () => resolve(); // Continuar aunque falle
+              logoImg.onerror = () => resolve();
               logoImg.src = lasalogo;
             });
 
@@ -351,43 +352,56 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
               tecoImg.src = '/PoweredByTeco.png';
             });
 
+            // Obtener dimensiones del contenedor visual y de la imagen
             const containerRect = containerRef.current!.getBoundingClientRect();
-            let containerWidth = containerRect.width;
+            const containerWidth = containerRect.width;
+            const containerHeight = containerRect.height;
 
-            if (containerWidth === 0 || containerWidth < 100) {
-              const containerHeight = containerRect.height;
-              containerWidth = (containerHeight * 9) / 16;
+            // Calcular cómo objectFit: cover escala la imagen
+            const imgAspect = img.width / img.height;
+            const containerAspect = containerWidth / containerHeight;
+
+            let displayScale, offsetX, offsetY;
+
+            if (imgAspect > containerAspect) {
+              // Imagen más ancha proporcionalmente - se escala por altura, se recorta horizontalmente
+              displayScale = img.height / containerHeight;
+              offsetX = (img.width - containerWidth * displayScale) / 2;
+              offsetY = 0;
+            } else {
+              // Imagen más alta proporcionalmente - se escala por ancho, se recorta verticalmente  
+              displayScale = img.width / containerWidth;
+              offsetX = 0;
+              offsetY = (img.height - containerHeight * displayScale) / 2;
             }
 
-            const scale = img.width / containerWidth;
+            // Scale: de píxeles del contenedor a píxeles de la imagen real
+            const scale = displayScale;
 
             // Dibujar logo
             if (logoImg.complete && logoImg.naturalWidth > 0) {
-              // Calcular tamaño del logo relativo al canvas
-              // En pantalla es clamp(100px, 25vw, 140px). Usamos una proporción similar.
-              const logoWidth = img.width * 0.35; // 35% del ancho de la foto
+              const logoWidth = img.width * 0.35;
               const logoAspectRatio = logoImg.height / logoImg.width;
               const logoHeight = logoWidth * logoAspectRatio;
-
-              const logoX = (img.width - logoWidth) / 2; // Centrado
-              const logoY = img.height * 0.05; // 5% de margen superior
-
+              const logoX = (img.width - logoWidth) / 2;
+              const logoY = img.height * 0.05;
               ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
             }
 
-            // Dibujar logo de Teco (Abajo a la derecha)
-            if (tecoImg.complete && tecoImg.naturalWidth > 0) {
-              const tecoWidth = img.width * 0.50; // 50% del ancho (antes 25%)
-              const tecoAspectRatio = tecoImg.height / tecoImg.width;
-              const tecoHeight = tecoWidth * tecoAspectRatio;
-
-              const tecoX = img.width - tecoWidth - (img.width * 0.05); // 5% margen derecho
-              const tecoY = img.height - tecoHeight - (img.height * 0.03); // 3% margen inferior
-
-              ctx.drawImage(tecoImg, tecoX, tecoY, tecoWidth, tecoHeight);
-            }
+            // Función para dibujar logo de Teco (se llamará al final para que quede encima de todo)
+            const drawTecoLogo = () => {
+              if (tecoImg.complete && tecoImg.naturalWidth > 0) {
+                const tecoWidth = img.width * 0.50;
+                const tecoAspectRatio = tecoImg.height / tecoImg.width;
+                const tecoHeight = tecoWidth * tecoAspectRatio;
+                const tecoX = img.width - tecoWidth + (img.width * 0.1); // Sobresale un poco del borde
+                const tecoY = img.height - tecoHeight - (img.height * 0.03);
+                ctx.drawImage(tecoImg, tecoX, tecoY, tecoWidth, tecoHeight);
+              }
+            };
 
             if (placedStickers.length === 0) {
+              drawTecoLogo(); // Dibujar Teco al final
               const canvasData = canvasRef.current!.toDataURL('image/jpeg', 0.95);
               onSave(canvasData);
               return;
@@ -405,25 +419,28 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 stickerImg.onload = () => {
                   ctx.save();
 
-                  // Calcular el tamaño base que tenía en pantalla (match CSS clamp(60px, 12vw, 100px))
+                  // Calcular tamaño base del sticker en pantalla
                   const viewportWidth = window.innerWidth;
                   const baseSize = Math.max(60, Math.min(100, viewportWidth * 0.12));
 
-                  // Tamaño visual actual en el contenedor (píxeles de pantalla)
+                  // Tamaño visual del sticker (en píxeles de pantalla)
                   const visualWidth = baseSize * sticker.scale;
                   const aspectRatio = stickerImg.height / stickerImg.width;
                   const visualHeight = visualWidth * aspectRatio;
 
-                  // Convertir coordenadas visuales a coordenadas de canvas
-                  // sticker.x/y son relativos al contenedor visual
-                  const realX = sticker.x * scale;
-                  const realY = sticker.y * scale;
+                  // Convertir posición del contenedor a posición en la imagen real
+                  // sticker.x/y son coordenadas en el contenedor visual
+                  // Ajuste manual para compensar diferencias visuales
+                  const adjustX = img.width * 0.02;  // 2% a la derecha
+                  const adjustY = img.height * 0.03; // 3% hacia abajo
+                  const realX = offsetX + (sticker.x * scale) + adjustX;
+                  const realY = offsetY + (sticker.y * scale) + adjustY;
 
-                  // Calcular dimensiones finales en el canvas
+                  // Tamaño del sticker en la imagen final
                   const finalWidth = visualWidth * scale;
                   const finalHeight = visualHeight * scale;
 
-                  // Calcular centro para rotación
+                  // Centro para rotación
                   const centerX = realX + finalWidth / 2;
                   const centerY = realY + finalHeight / 2;
 
@@ -442,6 +459,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
 
                   loadedCount++;
                   if (loadedCount === totalStickers) {
+                    drawTecoLogo(); // Dibujar Teco encima de todo al final
                     const canvasData = canvasRef.current!.toDataURL('image/jpeg', 0.95);
                     onSave(canvasData);
                   }
@@ -450,6 +468,7 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
                 stickerImg.onerror = () => {
                   loadedCount++;
                   if (loadedCount === totalStickers) {
+                    drawTecoLogo(); // Dibujar Teco encima de todo al final
                     const canvasData = canvasRef.current!.toDataURL('image/jpeg', 0.95);
                     onSave(canvasData);
                   }
@@ -571,98 +590,87 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
           width: '100%',
           backgroundColor: AURORA_THEME.colors.black,
           overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%', // Ocupar todo el espacio disponible
+          height: '100%',
         }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15 }}
       >
-        <div
+        <img
+          ref={imageRef}
+          src={photoData}
+          alt="Captured"
           style={{
-            position: 'relative',
-            width: 'auto',
-            height: 'auto',
-            maxWidth: '100%',
-            maxHeight: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
           }}
-        >
-          <img
-            src={photoData}
-            alt="Captured"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover', // Asegurar que cubra todo
-              display: 'block',
-            }}
-          />
+        />
 
-          {/* Stickers colocados */}
-          <AnimatePresence>
-            {placedStickers.map((sticker, index) => {
-              const stickerDef = AVAILABLE_STICKERS.find(s => s.id === sticker.stickerId);
-              if (!stickerDef) return null;
+        {/* Stickers colocados */}
+        <AnimatePresence>
+          {placedStickers.map((sticker, index) => {
+            const stickerDef = AVAILABLE_STICKERS.find(s => s.id === sticker.stickerId);
+            if (!stickerDef) return null;
 
-              return (
-                <motion.div
-                  key={sticker.id}
-                  ref={(el) => {
-                    if (el) stickerRefs.current.set(sticker.id, el);
-                    else stickerRefs.current.delete(sticker.id);
-                  }}
-                  onTouchStart={(e) => handleTouchStart(e, index)}
-                  onTouchMove={(e) => handleTouchMove(e, index)}
-                  onTouchEnd={handleTouchEnd}
-                  onMouseDown={(e) => handleMouseDown(e, index)}
-                  onMouseMove={(e) => handleMouseMove(e, index)}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onClick={() => setSelectedStickerIndex(index)}
-                  initial={{ opacity: 0, scale: 0, rotate: -180 }}
-                  animate={{
-                    opacity: 1,
-                    scale: sticker.scale,
-                    rotate: sticker.rotation,
-                    transition: {
-                      type: 'spring',
-                      damping: 15,
-                      stiffness: 300,
-                    }
-                  }}
-                  exit={{ opacity: 0, scale: 0, rotate: 180 }}
+            return (
+              <motion.div
+                key={sticker.id}
+                ref={(el) => {
+                  if (el) stickerRefs.current.set(sticker.id, el);
+                  else stickerRefs.current.delete(sticker.id);
+                }}
+                onTouchStart={(e) => handleTouchStart(e, index)}
+                onTouchMove={(e) => handleTouchMove(e, index)}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={(e) => handleMouseDown(e, index)}
+                onMouseMove={(e) => handleMouseMove(e, index)}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onClick={() => setSelectedStickerIndex(index)}
+                initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                animate={{
+                  opacity: 1,
+                  scale: sticker.scale,
+                  rotate: sticker.rotation,
+                  transition: {
+                    type: 'spring',
+                    damping: 15,
+                    stiffness: 300,
+                  }
+                }}
+                exit={{ opacity: 0, scale: 0, rotate: 180 }}
+                style={{
+                  position: 'absolute',
+                  left: `${sticker.x}px`,
+                  top: `${sticker.y}px`,
+                  cursor: 'grab',
+                  border: selectedStickerIndex === index ? `3px solid ${AURORA_THEME.colors.gold}` : 'none',
+                  borderRadius: AURORA_THEME.borderRadius.medium,
+                  padding: selectedStickerIndex === index ? '4px' : '0px',
+                  backgroundColor: selectedStickerIndex === index ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                  touchAction: 'none',
+                  boxShadow: selectedStickerIndex === index ? AURORA_THEME.elevations.level4 : 'none',
+                  pointerEvents: 'auto',
+                  zIndex: 1,
+                }}
+              >
+                <img
+                  src={stickerDef.icon}
+                  alt={stickerDef.name}
                   style={{
-                    position: 'absolute',
-                    left: `${sticker.x}px`,
-                    top: `${sticker.y}px`,
-                    cursor: 'grab',
-                    border: selectedStickerIndex === index ? `3px solid ${AURORA_THEME.colors.gold}` : 'none',
-                    borderRadius: AURORA_THEME.borderRadius.medium,
-                    padding: selectedStickerIndex === index ? '4px' : '0px',
-                    backgroundColor: selectedStickerIndex === index ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                    touchAction: 'none',
-                    boxShadow: selectedStickerIndex === index ? AURORA_THEME.elevations.level4 : 'none',
-                    pointerEvents: 'auto',
-                    zIndex: 1,
+                    width: 'clamp(60px, 12vw, 100px)',
+                    height: 'clamp(60px, 12vw, 100px)',
+                    objectFit: 'contain',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
                   }}
-                >
-                  <img
-                    src={stickerDef.icon}
-                    alt={stickerDef.name}
-                    style={{
-                      width: 'clamp(60px, 12vw, 100px)',
-                      height: 'clamp(60px, 12vw, 100px)',
-                      objectFit: 'contain',
-                      pointerEvents: 'none',
-                      userSelect: 'none',
-                    }}
-                    draggable={false}
-                  />
+                  draggable={false}
+                />
 
                   {/* Controles */}
                   {selectedStickerIndex === index && (
@@ -763,7 +771,6 @@ export const StickerEditor: React.FC<StickerEditorProps> = ({ photoData, onSave,
               );
             })}
           </AnimatePresence>
-        </div>
       </motion.div>
 
       {/* Barra inferior con botones */}

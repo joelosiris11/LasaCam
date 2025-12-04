@@ -43,10 +43,15 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'awm-11', icon: '/stickers/AWM/AWM (11).png', name: 'AWM 11', color: '#1E3A8A', company: 'AWM' },
   { id: 'awm-12', icon: '/stickers/AWM/AWM (12).png', name: 'AWM 12', color: '#1E3A8A', company: 'AWM' },
 
-  // Brickpoint (3 stickers)
-  { id: 'brickpoint-1', icon: '/stickers/Brickpoint/brickpoint_0000_Capa-2.png', name: 'Brickpoint 1', color: '#B8860B', company: 'Brickpoint' },
-  { id: 'brickpoint-2', icon: '/stickers/Brickpoint/brickpoint_0001_Capa-3.png', name: 'Brickpoint 2', color: '#B8860B', company: 'Brickpoint' },
-  { id: 'brickpoint-3', icon: '/stickers/Brickpoint/brickpoint_0002_Capa-1.png', name: 'Brickpoint 3', color: '#B8860B', company: 'Brickpoint' },
+  // Brickpoint (8 stickers)
+  { id: 'brickpoint-1', icon: '/stickers/Brickpoint/Stickers1.png', name: 'Brickpoint 1', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-2', icon: '/stickers/Brickpoint/Stickers2.png', name: 'Brickpoint 2', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-3', icon: '/stickers/Brickpoint/Stickers3.png', name: 'Brickpoint 3', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-4', icon: '/stickers/Brickpoint/Stickers4.png', name: 'Brickpoint 4', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-5', icon: '/stickers/Brickpoint/Stickers5.png', name: 'Brickpoint 5', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-6', icon: '/stickers/Brickpoint/Stickers6.png', name: 'Brickpoint 6', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-7', icon: '/stickers/Brickpoint/Stickers7.png', name: 'Brickpoint 7', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-8', icon: '/stickers/Brickpoint/Stickers8.png', name: 'Brickpoint 8', color: '#B8860B', company: 'Brickpoint' },
 
   // Carriben Sunrise (4 stickers)
   { id: 'carribensunrise-1', icon: '/stickers/Carribensunrise/carriven-sunrise_0000_Capa-1.png', name: 'Carriben Sunrise 1', color: '#FF69B4', company: 'Carriben Sunrise' },
@@ -60,28 +65,25 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'fidelium-3', icon: '/stickers/fidelium/fidelium_0002_Capa-3.png', name: 'Fidelium 3', color: '#06FFA5', company: 'Fidelium' },
   { id: 'fidelium-4', icon: '/stickers/fidelium/fidelium_0003_Capa-4.png', name: 'Fidelium 4', color: '#06FFA5', company: 'Fidelium' },
 
-  // Kora (21 stickers)
+  // Kora (18 stickers)
   { id: 'kora-1', icon: '/stickers/Kora/st1_0001_Layer-2.png', name: 'Kora 1', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-2', icon: '/stickers/Kora/st1_0002_Layer-3.png', name: 'Kora 2', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-3', icon: '/stickers/Kora/st1_0004_Layer-5.png', name: 'Kora 3', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-4', icon: '/stickers/Kora/st1_0007_Layer-8.png', name: 'Kora 4', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-5', icon: '/stickers/Kora/st1_0008_Layer-9.png', name: 'Kora 5', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-6', icon: '/stickers/Kora/st2_0000_Layer-1.png', name: 'Kora 6', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-7', icon: '/stickers/Kora/st2_0001_Layer-2.png', name: 'Kora 7', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-8', icon: '/stickers/Kora/st2_0002_Layer-3.png', name: 'Kora 8', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-9', icon: '/stickers/Kora/st2_0003_Layer-4.png', name: 'Kora 9', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-10', icon: '/stickers/Kora/st2_0004_Layer-5.png', name: 'Kora 10', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-11', icon: '/stickers/Kora/st2_0005_Layer-6.png', name: 'Kora 11', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-12', icon: '/stickers/Kora/st2_0006_Layer-7.png', name: 'Kora 12', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-13', icon: '/stickers/Kora/st2_0007_Layer-8.png', name: 'Kora 13', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-14', icon: '/stickers/Kora/st2_0008_Layer-9.png', name: 'Kora 14', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-15', icon: '/stickers/Kora/st2_0009_Layer-10.png', name: 'Kora 15', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-16', icon: '/stickers/Kora/st3_0000_Layer-1.png', name: 'Kora 16', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-17', icon: '/stickers/Kora/st3_0002_Layer-3.png', name: 'Kora 17', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-18', icon: '/stickers/Kora/st_0000_Layer-1.png', name: 'Kora 18', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-19', icon: '/stickers/Kora/st_0005_Layer-6.png', name: 'Kora 19', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-20', icon: '/stickers/Kora/st_0007_Layer-8.png', name: 'Kora 20', color: '#E91E63', company: 'Kora' },
-  { id: 'kora-21', icon: '/stickers/Kora/st_0008_Layer-9.png', name: 'Kora 21', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-2', icon: '/stickers/Kora/st1_0004_Layer-5.png', name: 'Kora 2', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-3', icon: '/stickers/Kora/st1_0007_Layer-8.png', name: 'Kora 3', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-4', icon: '/stickers/Kora/st1_0008_Layer-9.png', name: 'Kora 4', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-5', icon: '/stickers/Kora/st2_0000_Layer-1.png', name: 'Kora 5', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-6', icon: '/stickers/Kora/st2_0001_Layer-2.png', name: 'Kora 6', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-7', icon: '/stickers/Kora/st2_0002_Layer-3.png', name: 'Kora 7', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-8', icon: '/stickers/Kora/st2_0004_Layer-5.png', name: 'Kora 8', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-9', icon: '/stickers/Kora/st2_0005_Layer-6.png', name: 'Kora 9', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-10', icon: '/stickers/Kora/st2_0006_Layer-7.png', name: 'Kora 10', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-11', icon: '/stickers/Kora/st2_0007_Layer-8.png', name: 'Kora 11', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-12', icon: '/stickers/Kora/st2_0008_Layer-9.png', name: 'Kora 12', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-13', icon: '/stickers/Kora/st2_0009_Layer-10.png', name: 'Kora 13', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-14', icon: '/stickers/Kora/st3_0000_Layer-1.png', name: 'Kora 14', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-15', icon: '/stickers/Kora/st3_0002_Layer-3.png', name: 'Kora 15', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-16', icon: '/stickers/Kora/st_0005_Layer-6.png', name: 'Kora 16', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-17', icon: '/stickers/Kora/st_0007_Layer-8.png', name: 'Kora 17', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-18', icon: '/stickers/Kora/st_0008_Layer-9.png', name: 'Kora 18', color: '#E91E63', company: 'Kora' },
 
   // Grupo Coorporativo + La Aurora Tabaco (14 stickers)
   { id: 'grupocoorporativo-1', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0000_Capa-1.png', name: 'Grupo Coorporativo 1', color: '#8B5A8F', company: 'La Aurora' },
@@ -122,7 +124,7 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'parqueindustrial-8', icon: '/stickers/parqueindustrial/parque industrial, leon jimenesz (8).png', name: 'Parque Industrial 8', color: '#9370DB', company: 'Parque Industrial' },
   { id: 'parqueindustrial-9', icon: '/stickers/parqueindustrial/parque industrial, leon jimenesz (9).png', name: 'Parque Industrial 9', color: '#9370DB', company: 'Parque Industrial' },
 
-  // PCM (13 stickers)
+  // PCM (12 stickers)
   { id: 'pcm-1', icon: '/stickers/pcm/pcm_0000_Capa-2.png', name: 'PCM 1', color: '#00CED1', company: 'PCM' },
   { id: 'pcm-2', icon: '/stickers/pcm/pcm_0001_Capa-3.png', name: 'PCM 2', color: '#00CED1', company: 'PCM' },
   { id: 'pcm-3', icon: '/stickers/pcm/pcm_0002_Capa-4.png', name: 'PCM 3', color: '#00CED1', company: 'PCM' },
@@ -135,7 +137,6 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'pcm-10', icon: '/stickers/pcm/pcm_0009_Capa-11.png', name: 'PCM 10', color: '#00CED1', company: 'PCM' },
   { id: 'pcm-11', icon: '/stickers/pcm/pcm_0010_Capa-12.png', name: 'PCM 11', color: '#00CED1', company: 'PCM' },
   { id: 'pcm-12', icon: '/stickers/pcm/pcm_0011_Capa-13.png', name: 'PCM 12', color: '#00CED1', company: 'PCM' },
-  { id: 'pcm-13', icon: '/stickers/pcm/pcm_0012_Capa-1.png', name: 'PCM 13', color: '#00CED1', company: 'PCM' },
 
   // Rum (4 stickers)
   { id: 'rum-1', icon: '/stickers/Rum/rum.png', name: 'Rum 1', color: '#8B5A8F', company: 'La Aurora' },
@@ -156,6 +157,15 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'teco-10', icon: '/stickers/teco/teco (10).png', name: 'Teco 10', color: '#FF6B35', company: 'Teco' },
   { id: 'teco-11', icon: '/stickers/teco/teco (11).png', name: 'Teco 11', color: '#FF6B35', company: 'Teco' },
   { id: 'teco-12', icon: '/stickers/teco/teco (12).png', name: 'Teco 12', color: '#FF6B35', company: 'Teco' },
+
+  // Sundance (7 stickers)
+  { id: 'sundance-1', icon: '/stickers/Sundance/Stickers(1).png', name: 'Sundance 1', color: '#FF8C00', company: 'Sundance' },
+  { id: 'sundance-2', icon: '/stickers/Sundance/Stickers(2).png', name: 'Sundance 2', color: '#FF8C00', company: 'Sundance' },
+  { id: 'sundance-3', icon: '/stickers/Sundance/Stickers(3).png', name: 'Sundance 3', color: '#FF8C00', company: 'Sundance' },
+  { id: 'sundance-4', icon: '/stickers/Sundance/Stickers(4).png', name: 'Sundance 4', color: '#FF8C00', company: 'Sundance' },
+  { id: 'sundance-5', icon: '/stickers/Sundance/Stickers(5).png', name: 'Sundance 5', color: '#FF8C00', company: 'Sundance' },
+  { id: 'sundance-6', icon: '/stickers/Sundance/Stickers(6).png', name: 'Sundance 6', color: '#FF8C00', company: 'Sundance' },
+  { id: 'sundance-7', icon: '/stickers/Sundance/Stickers(7).png', name: 'Sundance 7', color: '#FF8C00', company: 'Sundance' },
 ];
 
 /**
@@ -174,6 +184,7 @@ export const COMPANIES: string[] = [
   'La Aurora USA',
   'Parque Industrial',
   'PCM',
+  'Sundance',
 ];
 
 /**
