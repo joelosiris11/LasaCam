@@ -4,7 +4,7 @@ import type { Sticker } from '../types';
  * Auto-generated sticker index
  * Last updated: December 4, 2025
  * 
- * Total: 98 stickers across 12 companies
+ * Total: 114 stickers across 12 companies
  */
 
 export const AVAILABLE_STICKERS: Sticker[] = [
@@ -43,6 +43,11 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'awm-11', icon: '/stickers/AWM/AWM (11).png', name: 'AWM 11', color: '#1E3A8A', company: 'AWM' },
   { id: 'awm-12', icon: '/stickers/AWM/AWM (12).png', name: 'AWM 12', color: '#1E3A8A', company: 'AWM' },
 
+  // Brickpoint (3 stickers)
+  { id: 'brickpoint-1', icon: '/stickers/Brickpoint/brickpoint_0000_Capa-2.png', name: 'Brickpoint 1', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-2', icon: '/stickers/Brickpoint/brickpoint_0001_Capa-3.png', name: 'Brickpoint 2', color: '#B8860B', company: 'Brickpoint' },
+  { id: 'brickpoint-3', icon: '/stickers/Brickpoint/brickpoint_0002_Capa-1.png', name: 'Brickpoint 3', color: '#B8860B', company: 'Brickpoint' },
+
   // Carriben Sunrise (4 stickers)
   { id: 'carribensunrise-1', icon: '/stickers/Carribensunrise/carriven-sunrise_0000_Capa-1.png', name: 'Carriben Sunrise 1', color: '#FF69B4', company: 'Carriben Sunrise' },
   { id: 'carribensunrise-2', icon: '/stickers/Carribensunrise/carriven-sunrise_0001_Capa-3.png', name: 'Carriben Sunrise 2', color: '#FF69B4', company: 'Carriben Sunrise' },
@@ -55,23 +60,46 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'fidelium-3', icon: '/stickers/fidelium/fidelium_0002_Capa-3.png', name: 'Fidelium 3', color: '#06FFA5', company: 'Fidelium' },
   { id: 'fidelium-4', icon: '/stickers/fidelium/fidelium_0003_Capa-4.png', name: 'Fidelium 4', color: '#06FFA5', company: 'Fidelium' },
 
-  // Grupo Coorporativo (7 stickers)
-  { id: 'grupocoorporativo-1', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0000_Capa-1.png', name: 'Grupo Coorporativo 1', color: '#FFD700', company: 'Grupo Coorporativo' },
-  { id: 'grupocoorporativo-2', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0001_Capa-2.png', name: 'Grupo Coorporativo 2', color: '#FFD700', company: 'Grupo Coorporativo' },
-  { id: 'grupocoorporativo-3', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0002_Capa-3.png', name: 'Grupo Coorporativo 3', color: '#FFD700', company: 'Grupo Coorporativo' },
-  { id: 'grupocoorporativo-4', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0003_Capa-4.png', name: 'Grupo Coorporativo 4', color: '#FFD700', company: 'Grupo Coorporativo' },
-  { id: 'grupocoorporativo-5', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0004_Capa-5.png', name: 'Grupo Coorporativo 5', color: '#FFD700', company: 'Grupo Coorporativo' },
-  { id: 'grupocoorporativo-6', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0005_Capa-6.png', name: 'Grupo Coorporativo 6', color: '#FFD700', company: 'Grupo Coorporativo' },
-  { id: 'grupocoorporativo-7', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0006_Capa-7.png', name: 'Grupo Coorporativo 7', color: '#FFD700', company: 'Grupo Coorporativo' },
+  // Kora (21 stickers)
+  { id: 'kora-1', icon: '/stickers/Kora/st1_0001_Layer-2.png', name: 'Kora 1', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-2', icon: '/stickers/Kora/st1_0002_Layer-3.png', name: 'Kora 2', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-3', icon: '/stickers/Kora/st1_0004_Layer-5.png', name: 'Kora 3', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-4', icon: '/stickers/Kora/st1_0007_Layer-8.png', name: 'Kora 4', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-5', icon: '/stickers/Kora/st1_0008_Layer-9.png', name: 'Kora 5', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-6', icon: '/stickers/Kora/st2_0000_Layer-1.png', name: 'Kora 6', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-7', icon: '/stickers/Kora/st2_0001_Layer-2.png', name: 'Kora 7', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-8', icon: '/stickers/Kora/st2_0002_Layer-3.png', name: 'Kora 8', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-9', icon: '/stickers/Kora/st2_0003_Layer-4.png', name: 'Kora 9', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-10', icon: '/stickers/Kora/st2_0004_Layer-5.png', name: 'Kora 10', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-11', icon: '/stickers/Kora/st2_0005_Layer-6.png', name: 'Kora 11', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-12', icon: '/stickers/Kora/st2_0006_Layer-7.png', name: 'Kora 12', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-13', icon: '/stickers/Kora/st2_0007_Layer-8.png', name: 'Kora 13', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-14', icon: '/stickers/Kora/st2_0008_Layer-9.png', name: 'Kora 14', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-15', icon: '/stickers/Kora/st2_0009_Layer-10.png', name: 'Kora 15', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-16', icon: '/stickers/Kora/st3_0000_Layer-1.png', name: 'Kora 16', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-17', icon: '/stickers/Kora/st3_0002_Layer-3.png', name: 'Kora 17', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-18', icon: '/stickers/Kora/st_0000_Layer-1.png', name: 'Kora 18', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-19', icon: '/stickers/Kora/st_0005_Layer-6.png', name: 'Kora 19', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-20', icon: '/stickers/Kora/st_0007_Layer-8.png', name: 'Kora 20', color: '#E91E63', company: 'Kora' },
+  { id: 'kora-21', icon: '/stickers/Kora/st_0008_Layer-9.png', name: 'Kora 21', color: '#E91E63', company: 'Kora' },
+
+  // Grupo Coorporativo + La Aurora Tabaco (14 stickers)
+  { id: 'grupocoorporativo-1', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0000_Capa-1.png', name: 'Grupo Coorporativo 1', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'grupocoorporativo-2', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0001_Capa-2.png', name: 'Grupo Coorporativo 2', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'grupocoorporativo-3', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0002_Capa-3.png', name: 'Grupo Coorporativo 3', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'grupocoorporativo-4', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0003_Capa-4.png', name: 'Grupo Coorporativo 4', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'grupocoorporativo-5', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0004_Capa-5.png', name: 'Grupo Coorporativo 5', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'grupocoorporativo-6', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0005_Capa-6.png', name: 'Grupo Coorporativo 6', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'grupocoorporativo-7', icon: '/stickers/Grupocoorporativo/Grupo-coorporativo_0006_Capa-7.png', name: 'Grupo Coorporativo 7', color: '#8B5A8F', company: 'La Aurora' },
 
   // La Aurora Tabaco (7 stickers)
-  { id: 'laauroratabaco-1', icon: '/stickers/laauroratabaco/aurora-tabaco_0000_Capa-2.png', name: 'La Aurora Tabaco 1', color: '#8B5A8F', company: 'La Aurora Tabaco' },
-  { id: 'laauroratabaco-2', icon: '/stickers/laauroratabaco/aurora-tabaco_0001_Capa-3.png', name: 'La Aurora Tabaco 2', color: '#8B5A8F', company: 'La Aurora Tabaco' },
-  { id: 'laauroratabaco-3', icon: '/stickers/laauroratabaco/aurora-tabaco_0002_Capa-4.png', name: 'La Aurora Tabaco 3', color: '#8B5A8F', company: 'La Aurora Tabaco' },
-  { id: 'laauroratabaco-4', icon: '/stickers/laauroratabaco/aurora-tabaco_0003_Capa-5.png', name: 'La Aurora Tabaco 4', color: '#8B5A8F', company: 'La Aurora Tabaco' },
-  { id: 'laauroratabaco-5', icon: '/stickers/laauroratabaco/aurora-tabaco_0004_Capa-6.png', name: 'La Aurora Tabaco 5', color: '#8B5A8F', company: 'La Aurora Tabaco' },
-  { id: 'laauroratabaco-6', icon: '/stickers/laauroratabaco/aurora-tabaco_0005_Capa-7.png', name: 'La Aurora Tabaco 6', color: '#8B5A8F', company: 'La Aurora Tabaco' },
-  { id: 'laauroratabaco-7', icon: '/stickers/laauroratabaco/aurora-tabaco_0006_Capa-8.png', name: 'La Aurora Tabaco 7', color: '#8B5A8F', company: 'La Aurora Tabaco' },
+  { id: 'laauroratabaco-1', icon: '/stickers/laauroratabaco/aurora-tabaco_0000_Capa-2.png', name: 'La Aurora Tabaco 1', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'laauroratabaco-2', icon: '/stickers/laauroratabaco/aurora-tabaco_0001_Capa-3.png', name: 'La Aurora Tabaco 2', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'laauroratabaco-3', icon: '/stickers/laauroratabaco/aurora-tabaco_0002_Capa-4.png', name: 'La Aurora Tabaco 3', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'laauroratabaco-4', icon: '/stickers/laauroratabaco/aurora-tabaco_0003_Capa-5.png', name: 'La Aurora Tabaco 4', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'laauroratabaco-5', icon: '/stickers/laauroratabaco/aurora-tabaco_0004_Capa-6.png', name: 'La Aurora Tabaco 5', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'laauroratabaco-6', icon: '/stickers/laauroratabaco/aurora-tabaco_0005_Capa-7.png', name: 'La Aurora Tabaco 6', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'laauroratabaco-7', icon: '/stickers/laauroratabaco/aurora-tabaco_0006_Capa-8.png', name: 'La Aurora Tabaco 7', color: '#8B5A8F', company: 'La Aurora' },
 
   // La Aurora USA (8 stickers)
   { id: 'laaurorausa-1', icon: '/stickers/laaurorausa/Arora-usa_0000_Capa-1.png', name: 'La Aurora USA 1', color: '#87CEEB', company: 'La Aurora USA' },
@@ -94,20 +122,6 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'parqueindustrial-8', icon: '/stickers/parqueindustrial/parque industrial, leon jimenesz (8).png', name: 'Parque Industrial 8', color: '#9370DB', company: 'Parque Industrial' },
   { id: 'parqueindustrial-9', icon: '/stickers/parqueindustrial/parque industrial, leon jimenesz (9).png', name: 'Parque Industrial 9', color: '#9370DB', company: 'Parque Industrial' },
 
-  // Patronato (12 stickers)
-  { id: 'patronato-1', icon: '/stickers/patronato/patronato_0000_Capa-2.png', name: 'Patronato 1', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-2', icon: '/stickers/patronato/patronato_0001_Capa-3.png', name: 'Patronato 2', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-3', icon: '/stickers/patronato/patronato_0002_Capa-4.png', name: 'Patronato 3', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-4', icon: '/stickers/patronato/patronato_0003_Capa-5.png', name: 'Patronato 4', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-5', icon: '/stickers/patronato/patronato_0004_Capa-6.png', name: 'Patronato 5', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-6', icon: '/stickers/patronato/patronato_0005_Capa-7.png', name: 'Patronato 6', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-7', icon: '/stickers/patronato/patronato_0006_Capa-8.png', name: 'Patronato 7', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-8', icon: '/stickers/patronato/patronato_0007_Capa-9.png', name: 'Patronato 8', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-9', icon: '/stickers/patronato/patronato_0008_Capa-10.png', name: 'Patronato 9', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-10', icon: '/stickers/patronato/patronato_0009_Capa-11.png', name: 'Patronato 10', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-11', icon: '/stickers/patronato/patronato_0010_Capa-12.png', name: 'Patronato 11', color: '#FFB347', company: 'Patronato' },
-  { id: 'patronato-12', icon: '/stickers/patronato/patronato_0011_Capa-13.png', name: 'Patronato 12', color: '#FFB347', company: 'Patronato' },
-
   // PCM (13 stickers)
   { id: 'pcm-1', icon: '/stickers/pcm/pcm_0000_Capa-2.png', name: 'PCM 1', color: '#00CED1', company: 'PCM' },
   { id: 'pcm-2', icon: '/stickers/pcm/pcm_0001_Capa-3.png', name: 'PCM 2', color: '#00CED1', company: 'PCM' },
@@ -122,6 +136,12 @@ export const AVAILABLE_STICKERS: Sticker[] = [
   { id: 'pcm-11', icon: '/stickers/pcm/pcm_0010_Capa-12.png', name: 'PCM 11', color: '#00CED1', company: 'PCM' },
   { id: 'pcm-12', icon: '/stickers/pcm/pcm_0011_Capa-13.png', name: 'PCM 12', color: '#00CED1', company: 'PCM' },
   { id: 'pcm-13', icon: '/stickers/pcm/pcm_0012_Capa-1.png', name: 'PCM 13', color: '#00CED1', company: 'PCM' },
+
+  // Rum (4 stickers)
+  { id: 'rum-1', icon: '/stickers/Rum/rum.png', name: 'Rum 1', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'rum-2', icon: '/stickers/Rum/rum2.png', name: 'Rum 2', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'rum-3', icon: '/stickers/Rum/rum3.png', name: 'Rum 3', color: '#8B5A8F', company: 'La Aurora' },
+  { id: 'rum-4', icon: '/stickers/Rum/rum4.png', name: 'Rum 4', color: '#8B5A8F', company: 'La Aurora' },
 
   // Teco (12 stickers)
   { id: 'teco-1', icon: '/stickers/teco/teco (1).png', name: 'Teco 1', color: '#FF6B35', company: 'Teco' },
@@ -142,18 +162,18 @@ export const AVAILABLE_STICKERS: Sticker[] = [
  * List of all companies (in display order)
  */
 export const COMPANIES: string[] = [
+  'La Aurora',
+  'Kora',
+  'Teco',
   'Ambar',
   'Aurora Logistic',
   'AWM',
+  'Brickpoint',
   'Carriben Sunrise',
   'Fidelium',
-  'Grupo Coorporativo',
-  'La Aurora Tabaco',
   'La Aurora USA',
   'Parque Industrial',
-  'Patronato',
   'PCM',
-  'Teco',
 ];
 
 /**
