@@ -189,8 +189,8 @@ const StickerCarousel: React.FC = () => {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Duplicar los stickers para crear un carrusel continuo
-  const duplicatedStickers = [...AVAILABLE_STICKERS, ...AVAILABLE_STICKERS, ...AVAILABLE_STICKERS];
+  // Seleccionar solo 15 stickers aleatorios para el fondo
+  const selectedStickers = AVAILABLE_STICKERS.slice(0, 15);
 
   return (
     <div
@@ -207,7 +207,7 @@ const StickerCarousel: React.FC = () => {
         height: '100dvh',
       }}
     >
-      {duplicatedStickers.map((sticker, index) => {
+      {selectedStickers.map((sticker, index) => {
         // Variar el tamaño y velocidad para más naturalidad
         // Usar un seed basado en el index para consistencia
         const seed = index * 7.3; // Número primo para mejor distribución
