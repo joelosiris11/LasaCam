@@ -189,8 +189,8 @@ const StickerCarousel: React.FC = () => {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Seleccionar solo 15 stickers aleatorios para el fondo
-  const selectedStickers = AVAILABLE_STICKERS.slice(0, 15);
+  // Seleccionar 40 stickers para el fondo (más stickers visibles)
+  const selectedStickers = AVAILABLE_STICKERS.slice(0, 40);
 
   return (
     <div
@@ -209,14 +209,13 @@ const StickerCarousel: React.FC = () => {
     >
       {selectedStickers.map((sticker, index) => {
         // Variar el tamaño y velocidad para más naturalidad
-        // Usar un seed basado en el index para consistencia
-        const seed = index * 7.3; // Número primo para mejor distribución
-        const size = Math.abs(Math.sin(seed) * 40 + 60); // Entre 20px y 100px
-        const duration = Math.abs(Math.cos(seed) * 20 + 35); // Entre 15s y 55s
-        const delay = (index * 2) % 30; // Espaciar los stickers
+        const seed = index * 7.3;
+        const size = Math.abs(Math.sin(seed) * 35 + 45); // Entre 45px y 80px
+        const duration = Math.abs(Math.cos(seed) * 10 + 18); // Entre 18s y 28s (más rápido)
+        const delay = (index * 0.5) % 8; // Delay más corto (0-8s)
 
         // Generar direcciones aleatorias pero consistentes
-        const angle = (seed * 137.5) % 360; // Ángulo dorado para distribución uniforme
+        const angle = (seed * 137.5) % 360;
         const angleRad = (angle * Math.PI) / 180;
 
         // Empezar desde posiciones aleatorias DENTRO de la pantalla
@@ -231,7 +230,7 @@ const StickerCarousel: React.FC = () => {
 
         // Rotación suave
         const initialRotate = (seed * 57.3) % 360;
-        const rotationSpeed = (Math.sin(seed) * 2 + 1) * 180; // Entre 180 y 540 grados
+        const rotationSpeed = (Math.sin(seed) * 2 + 1) * 180;
         const finalRotate = initialRotate + rotationSpeed;
 
         return (
@@ -241,7 +240,7 @@ const StickerCarousel: React.FC = () => {
               position: 'absolute',
               width: `${size}px`,
               height: `${size}px`,
-              opacity: 0.2, // Opacidad baja pero visible
+              opacity: 0.3, // Un poco más visible
             }}
             initial={{
               x: startX,
@@ -271,7 +270,6 @@ const StickerCarousel: React.FC = () => {
                 display: 'block',
               }}
               onError={(e) => {
-                // Si la imagen no carga, intentar con ruta alternativa
                 const target = e.target as HTMLImageElement;
                 if (!target.src.includes('data:')) {
                   console.warn('Sticker image failed to load:', sticker.icon);
