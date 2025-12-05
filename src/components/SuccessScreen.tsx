@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { DownloadIcon, RotateIcon } from './icons';
+import { ShareIcon, RotateIcon, DownloadIcon } from './icons';
 import AURORA_THEME from '../styles/theme';
 import lasalogo from '../assets/buttons/lasalogo.png';
 
@@ -12,16 +12,31 @@ interface SuccessScreenProps {
 export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset }) => {
   const [uploading, setUploading] = useState(true);
   const [uploadError, setUploadError] = useState(false);
+  const [canShare, setCanShare] = useState(false);
   const hasProcessedRef = React.useRef(false);
 
   useEffect(() => {
+    // Verificar si el navegador soporta Web Share API con archivos
+    checkShareSupport();
+    
     if (!hasProcessedRef.current) {
-      uploadAndDownload();
+      uploadToServer();
       hasProcessedRef.current = true;
     }
   }, []);
 
-  const uploadAndDownload = async () => {
+  const checkShareSupport = async () => {
+    try {
+      // Crear un archivo de prueba para verificar soporte
+      const testFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+      const canShareFiles = navigator.canShare && navigator.canShare({ files: [testFile] });
+      setCanShare(!!canShareFiles);
+    } catch {
+      setCanShare(false);
+    }
+  };
+
+  const uploadToServer = async () => {
     try {
       setUploading(true);
       setUploadError(false);
@@ -51,15 +66,49 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
       const responseData = await response.json();
       console.log('Foto subida al servidor correctamente:', responseData);
 
-      // Ahora que se subió exitosamente, descargar la imagen
       setUploading(false);
-      downloadImage();
+      
+      // Abrir share automáticamente después de subir
+      setTimeout(() => {
+        shareImage();
+      }, 300);
     } catch (error) {
       console.error('Error detallado subiendo foto:', error);
       setUploadError(true);
       setUploading(false);
-      // Aún así descargar la imagen localmente
-      downloadImage();
+      
+      // También abrir share aunque haya error de subida
+      setTimeout(() => {
+        shareImage();
+      }, 300);
+    }
+  };
+
+  const shareImage = async () => {
+    try {
+      // Convertir base64 a File
+      const res = await fetch(imageData);
+      const blob = await res.blob();
+      const file = new File([blob], `LasaCam-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+      // Verificar soporte y compartir
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Mi foto LasaCam',
+          text: '¡Mira mi foto de La Aurora! 🎉',
+        });
+      } else {
+        // Fallback a descarga si no hay soporte
+        downloadImage();
+      }
+    } catch (error) {
+      // Si el usuario cancela el share, no es un error
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Error compartiendo:', error);
+        // Fallback a descarga
+        downloadImage();
+      }
     }
   };
 
@@ -214,7 +263,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             fontFamily: '"Montserrat", sans-serif',
             opacity: 0.7,
           }}>
-            {uploading ? 'Guardando en el servidor...' : uploadError ? 'Foto guardada en tu galería (error al subir)' : 'Foto guardada en tu galería'}
+            {uploading ? 'Guardando en el servidor...' : uploadError ? 'Error al subir, pero puedes compartir tu foto' : '¡Comparte tu foto!'}
           </p>
         </motion.div>
 
@@ -262,8 +311,9 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
           >
+            {/* Botón principal: Compartir (o Descargar si no hay soporte) */}
             <motion.button
-              onClick={downloadImage}
+              onClick={shareImage}
               whileHover={{ scale: 1.05, boxShadow: AURORA_THEME.elevations.level8 }}
               whileTap={{ scale: 0.95 }}
               style={{
@@ -284,8 +334,8 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({ imageData, onReset
                 gap: 'clamp(8px, 2vw, 12px)',
               }}
             >
-              <DownloadIcon size={24} />
-              Descargar de nuevo
+              {canShare ? <ShareIcon size={24} /> : <DownloadIcon size={24} />}
+              {canShare ? 'Compartir' : 'Descargar'}
             </motion.button>
 
             <motion.button
