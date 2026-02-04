@@ -20,6 +20,24 @@
         }
       },
       {
+        "source": "/api/procigar/upload",
+        "function": {
+          "functionId": "uploadProcigarPhoto"
+        }
+      },
+      {
+        "source": "/api/procigar/photos",
+        "function": {
+          "functionId": "listProcigarPhotos"
+        }
+      },
+      {
+        "source": "/api/procigar/download",
+        "function": {
+          "functionId": "downloadProcigarImages"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
