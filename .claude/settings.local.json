@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "C:\\Users\\soyel\\OneDrive\\Documents\\GitHub"
+    ],
+    "allow": [
+      "WebFetch(domain:cdn.jsdelivr.net)"
+    ]
+  }
+}

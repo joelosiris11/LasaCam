@@ -9,6 +9,7 @@ import secrets
 import zipfile
 from datetime import datetime
 from pathlib import Path
+from PIL import Image
 
 from firebase_functions import https_fn
 from firebase_functions.options import set_global_options, CorsOptions
@@ -30,6 +31,26 @@ cors_options = CorsOptions(cors_origins="*", cors_methods=["GET", "POST", "OPTIO
 def _get_file_extension(filename):
     """Obtiene la extensión del archivo."""
     return Path(filename).suffix.lower()
+
+
+def _convert_to_jpg(image_data):
+    """Convierte imagen a JPG."""
+    img = Image.open(io.BytesIO(image_data))
+
+    # Si tiene transparencia (RGBA), convertir a RGB con fondo blanco
+    if img.mode in ('RGBA', 'LA', 'P'):
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+        img = background
+    elif img.mode != 'RGB':
+        img = img.convert('RGB')
+
+    output = io.BytesIO()
+    img.save(output, format='JPEG', quality=92)
+    output.seek(0)
+    return output.getvalue()
 
 
 def _generate_unique_filename(original_filename):
@@ -248,12 +269,12 @@ def downloadMultipleImages(req: https_fn.Request) -> https_fn.Response:
         
         # Obtener bucket
         bucket = storage.bucket(STORAGE_BUCKET)
-        
+
         # Si es solo 1 imagen, descargarla directamente
         if len(image_names) == 1:
             image_name = image_names[0]
             blob = bucket.blob(f'uploads/{image_name}')
-            
+
             # Verificar que existe
             if not blob.exists():
                 return https_fn.Response(
@@ -261,59 +282,48 @@ def downloadMultipleImages(req: https_fn.Request) -> https_fn.Response:
                     status=404,
                     headers={'Content-Type': 'application/json'}
                 )
-            
-            # Descargar imagen
+
+            # Descargar y convertir a JPG
             image_data = blob.download_as_bytes()
-            
-            # Determinar content type basado en extensión
-            file_ext = _get_file_extension(image_name)
-            content_type_map = {
-                '.jpg': 'image/jpeg',
-                '.jpeg': 'image/jpeg',
-                '.png': 'image/png',
-                '.gif': 'image/gif'
-            }
-            content_type = content_type_map.get(file_ext, 'application/octet-stream')
-            
-            # Retornar imagen directamente
+            jpg_data = _convert_to_jpg(image_data)
+            jpg_name = Path(image_name).stem + '.jpg'
+
+            # Retornar imagen JPG
             return https_fn.Response(
-                image_data,
+                jpg_data,
                 status=200,
                 headers={
-                    'Content-Type': content_type,
-                    'Content-Disposition': f'inline; filename="{image_name}"',
+                    'Content-Type': 'image/jpeg',
+                    'Content-Disposition': f'attachment; filename="{jpg_name}"',
                     'Cache-Control': 'public, max-age=3600'
                 }
             )
-        
-        # Si son múltiples, crear ZIP
+
+        # Si son múltiples, crear ZIP con JPGs
         zip_buffer = io.BytesIO()
-        
+
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for image_name in image_names:
                 try:
-                    # Construir path completo en storage
                     blob = bucket.blob(f'uploads/{image_name}')
-                    
-                    # Verificar que el archivo existe
+
                     if not blob.exists():
                         print(f'Advertencia: {image_name} no existe, se omite')
                         continue
-                    
-                    # Descargar imagen como bytes
+
+                    # Descargar y convertir a JPG
                     image_data = blob.download_as_bytes()
-                    
-                    # Agregar al ZIP
-                    zip_file.writestr(image_name, image_data)
-                    
+                    jpg_data = _convert_to_jpg(image_data)
+                    jpg_name = Path(image_name).stem + '.jpg'
+
+                    zip_file.writestr(jpg_name, jpg_data)
+
                 except Exception as e:
                     print(f'Error procesando {image_name}: {str(e)}')
                     continue
-        
-        # Mover puntero al inicio del buffer
+
         zip_buffer.seek(0)
-        
-        # Generar nombre del archivo ZIP
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         zip_filename = f'lasacam_fotos_{timestamp}.zip'
         
@@ -616,12 +626,12 @@ def downloadProcigarImages(req: https_fn.Request) -> https_fn.Response:
         
         # Obtener bucket Procigar
         bucket = storage.bucket(PROCIGAR_BUCKET)
-        
+
         # Si es solo 1 imagen, descargarla directamente
         if len(image_names) == 1:
             image_name = image_names[0]
             blob = bucket.blob(f'uploads/{image_name}')
-            
+
             # Verificar que existe
             if not blob.exists():
                 return https_fn.Response(
@@ -629,62 +639,51 @@ def downloadProcigarImages(req: https_fn.Request) -> https_fn.Response:
                     status=404,
                     headers={'Content-Type': 'application/json'}
                 )
-            
-            # Descargar imagen
+
+            # Descargar y convertir a JPG
             image_data = blob.download_as_bytes()
-            
-            # Determinar content type basado en extensión
-            file_ext = _get_file_extension(image_name)
-            content_type_map = {
-                '.jpg': 'image/jpeg',
-                '.jpeg': 'image/jpeg',
-                '.png': 'image/png',
-                '.gif': 'image/gif'
-            }
-            content_type = content_type_map.get(file_ext, 'application/octet-stream')
-            
-            # Retornar imagen directamente
+            jpg_data = _convert_to_jpg(image_data)
+            jpg_name = Path(image_name).stem + '.jpg'
+
+            # Retornar imagen JPG
             return https_fn.Response(
-                image_data,
+                jpg_data,
                 status=200,
                 headers={
-                    'Content-Type': content_type,
-                    'Content-Disposition': f'inline; filename="{image_name}"',
+                    'Content-Type': 'image/jpeg',
+                    'Content-Disposition': f'attachment; filename="{jpg_name}"',
                     'Cache-Control': 'public, max-age=3600'
                 }
             )
-        
-        # Si son múltiples, crear ZIP
+
+        # Si son múltiples, crear ZIP con JPGs
         zip_buffer = io.BytesIO()
-        
+
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             for image_name in image_names:
                 try:
-                    # Construir path completo en storage
                     blob = bucket.blob(f'uploads/{image_name}')
-                    
-                    # Verificar que el archivo existe
+
                     if not blob.exists():
                         print(f'Advertencia: {image_name} no existe, se omite')
                         continue
-                    
-                    # Descargar imagen como bytes
+
+                    # Descargar y convertir a JPG
                     image_data = blob.download_as_bytes()
-                    
-                    # Agregar al ZIP
-                    zip_file.writestr(image_name, image_data)
-                    
+                    jpg_data = _convert_to_jpg(image_data)
+                    jpg_name = Path(image_name).stem + '.jpg'
+
+                    zip_file.writestr(jpg_name, jpg_data)
+
                 except Exception as e:
                     print(f'Error procesando {image_name}: {str(e)}')
                     continue
-        
-        # Mover puntero al inicio del buffer
+
         zip_buffer.seek(0)
-        
-        # Generar nombre del archivo ZIP
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         zip_filename = f'procigar_fotos_{timestamp}.zip'
-        
+
         # Retornar ZIP
         return https_fn.Response(
             zip_buffer.getvalue(),
@@ -694,10 +693,140 @@ def downloadProcigarImages(req: https_fn.Request) -> https_fn.Response:
                 'Content-Disposition': f'attachment; filename="{zip_filename}"'
             }
         )
-    
+
     except Exception as e:
         return https_fn.Response(
             json.dumps({'error': f'Error al procesar descarga: {str(e)}'}),
+            status=500,
+            headers={'Content-Type': 'application/json'}
+        )
+
+
+# --- Delete Functions ---
+
+@https_fn.on_request(cors=cors_options)
+def deletePhotos(req: https_fn.Request) -> https_fn.Response:
+    """
+    Elimina una o múltiples fotos del bucket LasaCam.
+    POST - Payload: { "imageNames": ["foto1.jpg", "foto2.jpg"] }
+    """
+
+    if req.method != 'POST':
+        return https_fn.Response(
+            json.dumps({'error': 'Método no permitido'}),
+            status=405,
+            headers={'Content-Type': 'application/json'}
+        )
+
+    try:
+        data = req.get_json(silent=True)
+        if not data:
+            return https_fn.Response(
+                json.dumps({'error': 'Body JSON requerido'}),
+                status=400,
+                headers={'Content-Type': 'application/json'}
+            )
+
+        image_names = data.get('imageNames', [])
+        if not isinstance(image_names, list) or len(image_names) == 0:
+            return https_fn.Response(
+                json.dumps({'error': 'imageNames debe ser una lista no vacía'}),
+                status=400,
+                headers={'Content-Type': 'application/json'}
+            )
+
+        bucket = storage.bucket(STORAGE_BUCKET)
+        deleted = []
+        errors = []
+
+        for image_name in image_names:
+            try:
+                blob = bucket.blob(f'uploads/{image_name}')
+                if blob.exists():
+                    blob.delete()
+                    deleted.append(image_name)
+                else:
+                    errors.append(f'{image_name} no existe')
+            except Exception as e:
+                errors.append(f'{image_name}: {str(e)}')
+
+        return https_fn.Response(
+            json.dumps({
+                'message': f'{len(deleted)} fotos eliminadas',
+                'deleted': deleted,
+                'errors': errors
+            }),
+            status=200,
+            headers={'Content-Type': 'application/json'}
+        )
+
+    except Exception as e:
+        return https_fn.Response(
+            json.dumps({'error': f'Error al eliminar fotos: {str(e)}'}),
+            status=500,
+            headers={'Content-Type': 'application/json'}
+        )
+
+
+@https_fn.on_request(cors=cors_options)
+def deleteProcigarPhotos(req: https_fn.Request) -> https_fn.Response:
+    """
+    Elimina una o múltiples fotos del bucket Procigar.
+    POST - Payload: { "imageNames": ["foto1.jpg", "foto2.jpg"] }
+    """
+
+    if req.method != 'POST':
+        return https_fn.Response(
+            json.dumps({'error': 'Método no permitido'}),
+            status=405,
+            headers={'Content-Type': 'application/json'}
+        )
+
+    try:
+        data = req.get_json(silent=True)
+        if not data:
+            return https_fn.Response(
+                json.dumps({'error': 'Body JSON requerido'}),
+                status=400,
+                headers={'Content-Type': 'application/json'}
+            )
+
+        image_names = data.get('imageNames', [])
+        if not isinstance(image_names, list) or len(image_names) == 0:
+            return https_fn.Response(
+                json.dumps({'error': 'imageNames debe ser una lista no vacía'}),
+                status=400,
+                headers={'Content-Type': 'application/json'}
+            )
+
+        bucket = storage.bucket(PROCIGAR_BUCKET)
+        deleted = []
+        errors = []
+
+        for image_name in image_names:
+            try:
+                blob = bucket.blob(f'uploads/{image_name}')
+                if blob.exists():
+                    blob.delete()
+                    deleted.append(image_name)
+                else:
+                    errors.append(f'{image_name} no existe')
+            except Exception as e:
+                errors.append(f'{image_name}: {str(e)}')
+
+        return https_fn.Response(
+            json.dumps({
+                'message': f'{len(deleted)} fotos eliminadas',
+                'deleted': deleted,
+                'errors': errors
+            }),
+            status=200,
+            headers={'Content-Type': 'application/json'}
+        )
+
+    except Exception as e:
+        return https_fn.Response(
+            json.dumps({'error': f'Error al eliminar fotos: {str(e)}'}),
             status=500,
             headers={'Content-Type': 'application/json'}
         )
